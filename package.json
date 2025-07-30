@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "ts-node-dev --respawn --transpile-only server.ts"
+    "server": "ts-node-dev --respawn --transpile-only src/server.ts"
   },
   "repository": {
     "type": "git",
@@ -19,14 +19,20 @@
   "homepage": "https://github.com/khh-Niloy/parcel-delivery-system-backend#readme",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.5",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "zod": "^3.25.74"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "typescript": "^5.8.3"
   }
 }

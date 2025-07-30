@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { validateZodSchema } from "../../middleware/validateZodSchema";
+import { userRegisterZodSchema, userUpdateZodSchema } from "./user.validation";
+import { roleBasedAccess } from "../../middleware/roleBasedAccess";
+import { Role } from "./user.interface";
+import { userController } from "./user.controller";
+
+export const userRoutes = Router()
+
+userRoutes.post("/register", validateZodSchema(userRegisterZodSchema), userController.userRegister)
+userRoutes.patch("/:id", validateZodSchema(userUpdateZodSchema), roleBasedAccess(...Object.values(Role)), userController.updateUser)
+userRoutes.get("/all-user",roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), userController.getAllUser)
