@@ -8,5 +8,5 @@ import { userController } from "./user.controller";
 export const userRoutes = Router()
 
 userRoutes.post("/register", validateZodSchema(userRegisterZodSchema), userController.userRegister)
-userRoutes.patch("/:id", validateZodSchema(userUpdateZodSchema), roleBasedAccess(...Object.values(Role)), userController.updateUser)
+userRoutes.patch("/:id", roleBasedAccess(...Object.values(Role)),validateZodSchema(userUpdateZodSchema), userController.updateUser)
 userRoutes.get("/all-user",roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), userController.getAllUser)

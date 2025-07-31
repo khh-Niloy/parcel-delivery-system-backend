@@ -3,7 +3,7 @@ import { hashedPasswordFunc } from "../../utility/hashedPassword"
 import { IauthProvider, IUser } from "./user.interface"
 import { User } from "./user.model"
 
-const userRegisterService = async(payload: IUser)=>{
+const userRegisterService = async(payload: Partial<IUser>)=>{
     const isAlreadyExist = await User.findOne({email: payload.email})
     if(isAlreadyExist){
         throw new Error("you already registered before");
@@ -11,7 +11,7 @@ const userRegisterService = async(payload: IUser)=>{
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)
 
-    const auths : IauthProvider = {provider: "credential", providerId: payload.email}
+    const auths : IauthProvider = {provider: "credential", providerId: payload.email as string}
     
     const newUser = await User.create({...payload, auths})
     return newUser
