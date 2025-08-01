@@ -21,6 +21,12 @@ export interface ITrackingEvents{
     updatedBy: Role
 }
 
+export interface IassignedDeliveryAgent{
+  _id: string,
+  name: string,
+  phone: string
+}
+
 export interface IParcel{
     _id?: Types.ObjectId,
     type: string,
@@ -34,5 +40,6 @@ export interface IParcel{
     status: Status,
     trackingEvents?: ITrackingEvents[],
     trackingId: string,
-    receiverPhoneNumber?: string
+    receiverPhoneNumber?: string,
+    assignedDeliveryAgent?: IassignedDeliveryAgent
 } 

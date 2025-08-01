@@ -53,8 +53,26 @@ const updateParcelStatus = async(req: Request, res: Response)=>{
     }
 }
 
+const assignDeliveryMan = async(req: Request, res: Response)=>{
+    try {
+        const trackingId = req.params.trackingId
+        const updateParcelStatus = await parcelServices.assignDeliveryManService(trackingId)
+        successResponse(res, {
+            status: 201,
+            message: "delivery agent assgined and dispatched",
+            data: updateParcelStatus
+        })
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: (error as Error).message
+        })
+    }
+}
+
 export const parcelController = {
     createParcel,
     updateParcel,
-    updateParcelStatus
+    updateParcelStatus,
+    assignDeliveryMan
 }

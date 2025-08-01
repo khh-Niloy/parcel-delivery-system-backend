@@ -6,6 +6,8 @@ import { createTrackingId } from "../../utility/createTrackingId"
 import { calculateFee } from "../../utility/calculateFee"
 import { Parcel } from "./parcel.model"
 import { StatusFlow } from "../../utility/statusFlow"
+import { DeliveryAgent } from "../deliveryAgent/deliveryAgent.model"
+import { AvailableStatus } from "../deliveryAgent/deliveryAgent.interface"
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
 
@@ -92,12 +94,41 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     );
     }
 
+    const updateStatusLog = {
+        ...payload,
+        timestamp: new Date().toISOString()
+    }
+
     const updateStatus = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
         $set: {status : payload.status},
-        $push: {trackingEvents: payload}
+        $push: {trackingEvents: updateStatusLog}
     }, {new : true})
 
     return updateStatus
+}
+
+const assignDeliveryManService = async(trackingId: string)=>{
+    const parcel = await Parcel.findOne({trackingId: trackingId})
+
+    const allAvailableDeliveryAgent = await DeliveryAgent.find({availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
+
+    const availableDeliveryAgent = allAvailableDeliveryAgent[0]
+
+    const updateStatusLog = {
+        status: Status.DISPATCHED,
+        location: parcel?.pickupAddress,
+        note: "Parcel picked up from sender",
+        timestamp: new Date().toISOString(),
+        updatedBy: Role.DELIVERY_AGENT
+    }
+
+    const insertDeliveryAgentId = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
+        assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
+    }, {new: true})
+
+    const addParcelId = await DeliveryAgent.findByIdAndUpdate(availableDeliveryAgent._id, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+
+    return {insertDeliveryAgentId, addParcelId}
 }
 
 
@@ -105,4 +136,5 @@ export const parcelServices = {
     createParcelService,
     updateParcelService,
     updateParcelStatusService,
+    assignDeliveryManService
 }

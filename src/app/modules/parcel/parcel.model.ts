@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IParcel, ITrackingEvents, Status } from "./parcel.interface";
+import { IassignedDeliveryAgent, IParcel, ITrackingEvents, Status } from "./parcel.interface";
 import { Role } from "../user/user.interface";
 
 const trackingSchema = new Schema<ITrackingEvents>({
@@ -10,6 +10,12 @@ const trackingSchema = new Schema<ITrackingEvents>({
     updatedBy: {type: String, enum: Role, required: true},
 }, {timestamps: true, versionKey: false, _id: false})
 
+const assignedDeliveryAgentSchema = new Schema<IassignedDeliveryAgent>({
+    _id: {type: String},
+    name: {type: String},
+    phone: {type: String},
+}, {timestamps: true, versionKey: false})
+
 const parcelSchema = new Schema<IParcel>({
     type: {type: String},
     weight: {type: Number, required: true},
@@ -19,9 +25,10 @@ const parcelSchema = new Schema<IParcel>({
     pickupAddress: {type: String, required: true},
     deliveryDate: {type: Date, required: true},
     fee: {type: Number, required: true},
-    status: {type: String, enum: Status, required: true},
+    status: {type: String, enum: Object.values(Status), required: true},
     trackingEvents: {type: [trackingSchema], default: []},
     trackingId: {type: String, required: true},
+    assignedDeliveryAgent: {type: assignedDeliveryAgentSchema}
 
 }, {timestamps: true, versionKey: false})
 

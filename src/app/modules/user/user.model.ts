@@ -6,7 +6,7 @@ const authProviderSchema = new Schema<IauthProvider>({
     providerId: {type: String, required: true}
 }, {versionKey: false, _id: false})
 
-const userSchema = new Schema<IUser>({
+export const userSchema = new Schema<IUser>({
     name: {type: String, required: true},
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String },
