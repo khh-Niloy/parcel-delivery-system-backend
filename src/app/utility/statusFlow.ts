@@ -1,27 +1,30 @@
+import { Status } from "../modules/parcel/parcel.interface";
+import { Role } from "../modules/user/user.interface";
+
 export const StatusFlow = {
   REQUESTED: {
-    next: ["APPROVED", "CANCELLED"],
-    allowedRoles: ["ADMIN", "SUPER_ADMIN","SENDER"],
+    next: [Status.APPROVED, Status.CANCELLED],
+    allowedRoles: [Role.ADMIN, Role.SUPER_ADMIN, Role.SENDER],
   },
   APPROVED: {
-    next: ["DISPATCHED", "BLOCKED"],
-    allowedRoles: ["ADMIN"],
+    next: [Status.DISPATCHED, Status.BLOCKED, Status.CANCELLED],
+    allowedRoles: [Role.ADMIN, Role.SENDER],
   },
   DISPATCHED: {
-    next: ["IN_TRANSIT"],
-    allowedRoles: ["DELIVERY_AGENT"],
+    next: [Status.IN_TRANSIT],
+    allowedRoles: [Role.DELIVERY_AGENT],
   },
   IN_TRANSIT: {
-    next: ["DELIVERED", "RETURNED"],
-    allowedRoles: ["DELIVERY_AGENT"],
+    next: [Status.DELIVERED, Status.RETURNED],
+    allowedRoles: [Role.DELIVERY_AGENT],
   },
   RETURNED: {
     next: [],
-    allowedRoles: ["ADMIN"],
+    allowedRoles: [Role.ADMIN],
   },
   DELIVERED: {
-    next: [],
-    allowedRoles: [],
+    next: [Status.CONFIRMED],
+    allowedRoles: [Role.RECEIVER],
   },
   CANCELLED: {
     next: [],
@@ -29,6 +32,6 @@ export const StatusFlow = {
   },
   BLOCKED: {
     next: [],
-    allowedRoles: ["ADMIN"],
+    allowedRoles: [Role.ADMIN],
   },
 }

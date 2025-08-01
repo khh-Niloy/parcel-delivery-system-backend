@@ -1,4 +1,3 @@
-import { JwtPayload } from "jsonwebtoken"
 import { hashedPasswordFunc } from "../../utility/hashedPassword"
 import { IauthProvider, IUser } from "./user.interface"
 import { User } from "./user.model"

@@ -1,14 +1,18 @@
 import { Response } from "express";
 
-interface IData{
-    status:number, message: string, data?: any, metaData?: any
+interface TResponse<T> {
+    status?: number;
+    success?: boolean;
+    message?: string;
+    data?: T;
+    metaData?: number
 }
 
-export const successResponse = (res:Response, data: IData)=>{
-    res.status(data.status).json({
-        success: true,
+export const successResponse = <T>(res: Response, data: TResponse<T>) => {
+    res.status(data.status as number).json({
+        success: data.success,
         message: data.message,
-        meta: data.metaData,
+        metaData: data.metaData,
         data: data.data
     })
 }

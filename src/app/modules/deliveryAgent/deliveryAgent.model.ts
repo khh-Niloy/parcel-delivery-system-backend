@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema } from "mongoose";
 import { AvailableStatus, ExperienceLevel, IDeliveryAgent, VehicleType } from "./deliveryAgent.interface";
 import { userSchema } from "../user/user.model";
 

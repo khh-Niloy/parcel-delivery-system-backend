@@ -54,11 +54,17 @@ const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)
     const filter = {trackingId: trackingId}
 
     const parcel = await Parcel.findOne(filter)
-    if(parcel?.status !== Status.REQUESTED){
+    if(parcel?.status !== Status.REQUESTED && parcel?.status !== Status.APPROVED ){
         throw new Error(`Sorry, parcel already on -> ${parcel?.status}`);
     }
 
-    const updateParcelInfo = await Parcel.findOneAndUpdate(filter, payload, {new: true})
+    const updatePayload = {...payload}
+
+    if(payload.weight){
+        updatePayload.fee = calculateFee(payload.weight)
+    }
+
+    const updateParcelInfo = await Parcel.findOneAndUpdate(filter, updatePayload, {new: true})
     return updateParcelInfo
 }
 
@@ -70,7 +76,7 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
         throw new Error("parcel not found");
     }
 
-    const parcelCurrentStatus = parcel.status as Status
+    const parcelCurrentStatus = parcel.status as keyof typeof StatusFlow
     const updateRequestRole = payload.updatedBy as Role
 
     const allowedNextStatus: Status[] = StatusFlow[parcelCurrentStatus].next as Status[]
@@ -82,7 +88,7 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     );
     }
 
-    if(payload.updatedBy === Role.SENDER && payload.status === Status.APPROVED){
+    if(payload.updatedBy === Role.SENDER && [Status.BLOCKED, Status.APPROVED, Status.DISPATCHED].includes(payload.status)){
         throw new Error(
       `Sender can not update ${parcelCurrentStatus} to ${payload.status}`
     );
@@ -92,6 +98,12 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
         throw new Error(
       `Invalid status transition from ${parcelCurrentStatus} to ${payload.status}`
     );
+    }
+
+    if(payload.status === Status.DELIVERED){
+        await DeliveryAgent.findOneAndUpdate({currentParcelId: parcel._id},{
+            availableStatus: AvailableStatus.AVAILABLE, currentParcelId: null, $inc: { completedDeliveries: 1 }
+        })
     }
 
     const updateStatusLog = {
@@ -107,7 +119,7 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     return updateStatus
 }
 
-const assignDeliveryManService = async(trackingId: string)=>{
+const assignDeliveryAgentService = async(trackingId: string)=>{
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
     const allAvailableDeliveryAgent = await DeliveryAgent.find({availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
@@ -131,10 +143,37 @@ const assignDeliveryManService = async(trackingId: string)=>{
     return {insertDeliveryAgentId, addParcelId}
 }
 
+const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
+    const allParcel = await Parcel.find({senderId: userInfo.userId})
+    const total = allParcel.length
+    return {allParcel, total}
+}
+
+const viewIncomingParcelReceiverService = async(userInfo: JwtPayload)=>{
+    const allIncomingParcel = await Parcel.find({receiverId: userInfo.userId, status: { $nin: [Status.APPROVED, Status.DELIVERED] }})
+    const total = allIncomingParcel.length
+    return {allIncomingParcel, total}
+}
+
+const allDeliveredParcelReceiverService = async(userInfo: JwtPayload)=>{
+    const allDeliveredParcel = await Parcel.find({receiverId: userInfo.userId, status: Status.CONFIRMED})
+    const total = allDeliveredParcel.length
+    return {allDeliveredParcel, total}
+}
+
+const allParcelService = async()=>{
+    const allParcel = await Parcel.find({})
+    const total = allParcel.length
+    return {allParcel, total}
+}
 
 export const parcelServices = {
     createParcelService,
     updateParcelService,
     updateParcelStatusService,
-    assignDeliveryManService
+    assignDeliveryAgentService,
+    viewAllParcelSenderService,
+    viewIncomingParcelReceiverService,
+    allDeliveredParcelReceiverService,
+    allParcelService
 }

@@ -41,9 +41,7 @@ const getAllUser = async(req: Request, res: Response)=>{
         successResponse(res, {
             status: 200,
             message: "all user",
-            metaData: {
-                total: totalUser
-            },
+            metaData: totalUser,
             data: allUser
         })
     } catch (error) {

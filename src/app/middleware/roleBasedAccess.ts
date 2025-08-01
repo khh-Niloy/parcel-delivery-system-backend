@@ -11,6 +11,8 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
 
         const user = await User.findOne({email: userInfo.email})
 
+        console.log(user)
+
         if(!user){
             throw new Error("user does not exist");
         }
@@ -19,18 +21,18 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
             throw new Error("you are not permitted to visit this route");
         }
 
-        if(user.isDeleted){
+        if(user?.isDeleted){
             throw new Error("you have been deleted!");
         }
 
-        if(user.isBlocked){
+        if(user?.isBlocked){
             throw new Error("you have been blocked!");
         }
 
         if(![Role.ADMIN, Role.SUPER_ADMIN].includes(user.role) && (
-            req.body.isDeleted !== undefined ||
-            req.body.isBlocked !== undefined ||
-            req.body.role !== undefined
+            req?.body?.isDeleted !== undefined ||
+            req?.body?.isBlocked !== undefined ||
+            req?.body?.role !== undefined
         )){
             throw new Error(
                 "You are not permitted to update fields like isDeleted, isBlocked, or role."
