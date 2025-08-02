@@ -8,7 +8,7 @@ import { User } from "./user.model"
 const userRegisterService = async(payload: Partial<IUser>)=>{
     const isAlreadyExist = await User.findOne({email: payload.email})
     if(isAlreadyExist){
-        throw new AppError(400, "you already registered before");
+        throw new AppError(400, "you already registered before, so please login");
     }
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)
@@ -21,15 +21,6 @@ const userRegisterService = async(payload: Partial<IUser>)=>{
             completedDeliveries : 0
         })
     }
-
-    // if(payload.role === Role.DELIVERY_AGENT){
-    //     const deliveryAgentCreatePayload = {
-    //         ...userCreatePayload,
-    //         availableStatus: AvailableStatus.AVAILABLE,
-    //         completedDeliveries : 0
-    //     } 
-    //     userCreatePayload = deliveryAgentCreatePayload
-    // }
     
     const newUser = await User.create(userCreatePayload)
     return newUser

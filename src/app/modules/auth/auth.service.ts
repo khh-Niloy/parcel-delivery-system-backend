@@ -10,18 +10,18 @@ import AppError from "../../errorHelper/AppError"
 const userLoginService = async(payload: Partial<IUser>)=>{
     const {email, password} = payload
 
-    console.log(payload)
+    // console.log(payload)
 
     const user = await User.findOne({email})
 
     if(!user){
-        throw new AppError(400, "Please register first");
+        throw new AppError(400, "User does not exist, Please register first");
     }
 
     const isPasswordOK = await hashedPasswordFunc.checkHashedPassword(password as string, user.password as string)
 
     if(!isPasswordOK){
-        throw new AppError(400, "password not matched!");
+        throw new AppError(400, "password is not matched!");
     }
 
     const jwtPayload = {
@@ -44,7 +44,7 @@ const getNewAccessTokenService = async(refreshToken: string)=>{
     const user = await User.findOne({email: userInfo.email})
 
     if(!user){
-        throw new AppError(400, "user not found");
+        throw new AppError(400, "user is not found");
     }
 
     if(user.isBlocked){
@@ -69,7 +69,7 @@ const changePasswordService = async(payload: { password: string }, user: JwtPayl
     const userInfo = await User.findOne({email: user.email})
 
     if(!userInfo){
-        throw new AppError(400, "user not found");
+        throw new AppError(400, "user is not found");
     }
 
     const newHashedPassword = await hashedPasswordFunc.generateHashedPassword(payload.password)

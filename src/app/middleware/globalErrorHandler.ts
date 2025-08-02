@@ -8,6 +8,7 @@ import { handleCastError } from "../errorHelper/handleCastError";
 import { handlerZodError } from "../errorHelper/handlerZodError";
 import { handlerValidationError } from "../errorHelper/handlerValidationError";
 import AppError from "../errorHelper/AppError";
+import { ZodError } from "zod";
 
 export const globalErrorHandler = async (err: any, req: Request, res: Response, next: NextFunction) => {
     if (envVars.NODE_ENV === "development") {
@@ -29,7 +30,7 @@ export const globalErrorHandler = async (err: any, req: Request, res: Response, 
         statusCode = simplifiedError.statusCode;
         message = simplifiedError.message
     }
-    else if (err.name === "ZodError") {
+    else if (err instanceof ZodError) {
         const simplifiedError = handlerZodError(err)
         statusCode = simplifiedError.statusCode
         message = simplifiedError.message
