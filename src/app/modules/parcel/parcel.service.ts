@@ -236,7 +236,7 @@ const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
 }
 
 const viewIncomingParcelReceiverService = async(userInfo: JwtPayload)=>{
-    const allIncomingParcel = await Parcel.find({receiverId: userInfo.userId, status: { $nin: [Status.APPROVED, Status.DELIVERED] }})
+    const allIncomingParcel = await Parcel.find({receiverId: userInfo.userId, status: { $nin: [Status.APPROVED, Status.DELIVERED, Status.CONFIRMED, Status.CANCELLED, Status.BLOCKED] }})
     const total = allIncomingParcel.length
     return {allIncomingParcel, total}
 }
