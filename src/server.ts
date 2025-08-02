@@ -15,3 +15,6 @@ const startServer = async()=>{
 await startServer()
 await seedSuperAdmin()
 })()
+
+// https://parcel-delivery-system-backend-one.vercel.app/
+// http://localhost:8000
