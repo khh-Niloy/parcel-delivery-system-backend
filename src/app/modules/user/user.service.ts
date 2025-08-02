@@ -1,5 +1,7 @@
 import AppError from "../../errorHelper/AppError"
 import { hashedPasswordFunc } from "../../utility/hashedPassword"
+import { Status } from "../parcel/parcel.interface"
+import { Parcel } from "../parcel/parcel.model"
 import { AvailableStatus, IauthProvider, IUser, Role } from "./user.interface"
 import { User } from "./user.model"
 
@@ -51,11 +53,11 @@ const getAllDeliveryAgentService = async()=>{
     return {allDeliveryAgent, total}  
 }
 
-const updateAvailableStatusService = async(payload: Partial<IUser>, deliveryAgentId: string)=>{
+const updateAvailableStatusService = async(payload: {availableStatus: AvailableStatus}, deliveryAgentId: string)=>{
     if(payload.availableStatus === AvailableStatus.BUSY){
         throw new AppError(400, "you can only make available or offline")
     }
-    console.log(deliveryAgentId, payload.availableStatus)
+    // console.log(deliveryAgentId, payload.availableStatus)
 
     const deliveryAgent = await User.findById(deliveryAgentId)
     
@@ -67,7 +69,38 @@ const updateAvailableStatusService = async(payload: Partial<IUser>, deliveryAgen
         throw new AppError(400, "first you have to complete ongoing delivery")
     }
 
-    const updateDeliveryAgentStatus = await User.findOneAndUpdate({_id: deliveryAgentId}, {availableStatus: payload.availableStatus}, {new: true})
+    let nextStatus : AvailableStatus
+    nextStatus = payload.availableStatus
+
+    if(payload.availableStatus == AvailableStatus.AVAILABLE){
+
+        nextStatus = AvailableStatus.BUSY
+
+        const allWaitingParcels = await Parcel.find({status: Status.WAITING}).sort({ createdAt: 1 })
+
+        if(allWaitingParcels.length > 0){
+        const parcel = allWaitingParcels.shift()
+
+        const updateStatusLog = {
+            status: Status.DISPATCHED,
+            location: "location",
+            note: "Parcel picked up from sender",
+            timestamp: new Date().toISOString(),
+            updatedBy: Role.DELIVERY_AGENT
+        }
+
+        const availableDeliveryAgent = await User.findById(deliveryAgentId).select("_id name phone")
+
+        const insertDeliveryAgentId = await Parcel.findOneAndUpdate({_id: parcel?._id}, {
+        assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
+        }, {new: true})
+
+        const addParcelId = await User.findByIdAndUpdate(deliveryAgentId, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+        }
+        
+    }
+
+    const updateDeliveryAgentStatus = await User.findOneAndUpdate({_id: deliveryAgentId}, {availableStatus: nextStatus}, {new: true})
     return updateDeliveryAgentStatus
 }
 

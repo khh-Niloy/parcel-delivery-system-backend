@@ -10,6 +10,10 @@ export const StatusFlow = {
     next: [Status.DISPATCHED, Status.BLOCKED, Status.CANCELLED],
     allowedRoles: [Role.ADMIN, Role.SENDER],
   },
+  // WAITING: {
+  //   next: [Status.IN_TRANSIT],
+  //   allowedRoles: [Role.DELIVERY_AGENT],
+  // },
   DISPATCHED: {
     next: [Status.IN_TRANSIT],
     allowedRoles: [Role.DELIVERY_AGENT],

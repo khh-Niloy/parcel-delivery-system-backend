@@ -47,11 +47,18 @@ const updateParcelStatus = async(req: Request, res: Response, next: NextFunction
 const assignDeliveryMan = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const trackingId = req.params.trackingId
-        const updateParcelStatus = await parcelServices.assignDeliveryAgentService(trackingId)
+        const assignResult = await parcelServices.assignDeliveryAgentService(trackingId)
+        const insertDeliveryAgentId = assignResult?.insertDeliveryAgentId ?? null
+        const addParcelId = assignResult?.addParcelId ?? null
+        const isWaiting = assignResult?.isWaiting ?? true
+
+        const data = isWaiting === true ? null : {insertDeliveryAgentId, addParcelId}
+        const message = isWaiting === true ? "Could not find any available delivery agent, if someone available will be assigned" : "delivery agent assgined and dispatched"
+
         successResponse(res, {
             status: 201,
-            message: "delivery agent assgined and dispatched",
-            data: updateParcelStatus
+            message: message,
+            data: data
         })
     } catch (error) {
         next(error)
