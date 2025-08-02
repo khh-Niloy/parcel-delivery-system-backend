@@ -247,11 +247,10 @@ const allDeliveredParcelReceiverService = async(userInfo: JwtPayload)=>{
     return {allDeliveredParcel, total}
 }
 
-const allParcelService = async(query: any = {})=>{
+const allParcelService = async(query: Record<string, unknown> = {})=>{
     const filter = {...query}
     const searchTerm = query.searchTerm || ""
     const sort = query.sort || "-createdAt"
-    // * cause filter does not need searchTerm!
     delete filter["searchTerm"]
     delete filter["sort"]
 
@@ -260,7 +259,7 @@ const allParcelService = async(query: any = {})=>{
         $or: searchArray.map((field)=> ({[field]: {$regex: searchTerm, $options: "i"}}))
     } : {}
 
-    const allParcel = await Parcel.find(searchQuery).find(filter).sort(sort)
+    const allParcel = await Parcel.find({ ...searchQuery, ...filter }).sort(sort as string)
     const total = allParcel.length
     return {allParcel, total}
 }
