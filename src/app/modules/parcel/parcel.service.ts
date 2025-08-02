@@ -16,11 +16,11 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
     const senderInfo = await User.findById(userInfo.userId)
 
     if(!senderInfo){
-        throw new AppError(400, "sender not found");
+        throw new AppError(400, "sender is not found");
     }
 
     if(!receiverInfo){
-        throw new AppError(400, "receiver not found");
+        throw new AppError(400, "receiver is not found");
     }
 
     const fee = calculateFee(payload.weight as number)
