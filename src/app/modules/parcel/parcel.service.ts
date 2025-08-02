@@ -1,13 +1,11 @@
 import { JwtPayload } from "jsonwebtoken"
 import { IParcel, ITrackingEvents, Status } from "./parcel.interface"
 import { User } from "../user/user.model"
-import { Role } from "../user/user.interface"
+import { AvailableStatus, Role } from "../user/user.interface"
 import { createTrackingId } from "../../utility/createTrackingId"
 import { calculateFee } from "../../utility/calculateFee"
 import { Parcel } from "./parcel.model"
 import { StatusFlow } from "../../utility/statusFlow"
-import { DeliveryAgent } from "../deliveryAgent/deliveryAgent.model"
-import { AvailableStatus } from "../deliveryAgent/deliveryAgent.interface"
 import AppError from "../../errorHelper/AppError"
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
@@ -45,7 +43,7 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
         trackingEvents,
         trackingId,
     }
-    console.log(parcelInfo)
+    // console.log(parcelInfo)
     const newParcel = await Parcel.create(parcelInfo)
     return newParcel
 }
@@ -102,7 +100,7 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     }
 
     if(payload.status === Status.DELIVERED){
-        await DeliveryAgent.findOneAndUpdate({currentParcelId: parcel._id},{
+        await User.findOneAndUpdate({currentParcelId: parcel._id},{
             availableStatus: AvailableStatus.AVAILABLE, currentParcelId: null, $inc: { completedDeliveries: 1 }
         })
     }
@@ -123,9 +121,11 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
 const assignDeliveryAgentService = async(trackingId: string)=>{
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
-    const allAvailableDeliveryAgent = await DeliveryAgent.find({availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
+    const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
 
     const availableDeliveryAgent = allAvailableDeliveryAgent[0]
+
+    // console.log(availableDeliveryAgent)
 
     const updateStatusLog = {
         status: Status.DISPATCHED,
@@ -139,7 +139,7 @@ const assignDeliveryAgentService = async(trackingId: string)=>{
         assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
     }, {new: true})
 
-    const addParcelId = await DeliveryAgent.findByIdAndUpdate(availableDeliveryAgent._id, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+    const addParcelId = await User.findByIdAndUpdate(availableDeliveryAgent._id, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
 
     return {insertDeliveryAgentId, addParcelId}
 }

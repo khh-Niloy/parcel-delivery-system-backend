@@ -10,6 +10,8 @@ import AppError from "../../errorHelper/AppError"
 const userLoginService = async(payload: Partial<IUser>)=>{
     const {email, password} = payload
 
+    console.log(payload)
+
     const user = await User.findOne({email})
 
     if(!user){

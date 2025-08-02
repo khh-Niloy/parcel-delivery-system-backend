@@ -7,7 +7,7 @@ import { parcelController } from "./parcel.controller";
 
 export const parcelRoutes = Router()
 
-parcelRoutes.get("/all-parcel", roleBasedAccess(Role.SENDER), parcelController.viewAllParcelSender)
+parcelRoutes.get("/all-sender-parcel", roleBasedAccess(Role.SENDER), parcelController.viewAllParcelSender)
 
 parcelRoutes.get("/incoming-parcels", roleBasedAccess(Role.RECEIVER), parcelController.viewIncomingParcelReceiver)
 

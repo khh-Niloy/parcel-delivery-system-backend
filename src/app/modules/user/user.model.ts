@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IauthProvider, IUser, Role } from "./user.interface";
+import { AvailableStatus, ExperienceLevel, IauthProvider, IUser, Role, VehicleType } from "./user.interface";
 
 const authProviderSchema = new Schema<IauthProvider>({
     provider: {type: String, required: true},
@@ -16,7 +16,28 @@ export const userSchema = new Schema<IUser>({
     isDeleted: {type: Boolean, default: false},
     isBlocked: {type: Boolean, default: false},
     role: { type: String, enum: Object.values(Role), default: Role.SENDER },
-    auths: [authProviderSchema]
+    auths: [authProviderSchema],
+
+    // delivery agent
+
+    currentParcelId: { type: Schema.Types.ObjectId, ref: "Parcel" },
+    availableStatus: { type: String, enum: Object.values(AvailableStatus)},
+    completedDeliveries: { type: Number},
+    assignedParcels: [{ type: Schema.Types.ObjectId, ref: "Parcel" }],
+    vehicleType: {type: String, enum: Object.values(VehicleType),},
+    licenseNumber: { type: String },
+    experienceLevel: { type: String, enum: Object.values(ExperienceLevel) }
+
+    // delivery agent
+
+
 }, {timestamps: true, versionKey: false})
+
+userSchema.pre("save", function (next) {
+    if (this.role !== Role.DELIVERY_AGENT) {
+        this.assignedParcels = undefined;
+    }
+    next();
+});
 
 export const User = model<IUser>("User", userSchema)

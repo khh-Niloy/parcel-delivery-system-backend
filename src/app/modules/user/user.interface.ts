@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export enum Role{
     "ADMIN" = "ADMIN",
     "SUPER_ADMIN" = "SUPER_ADMIN",
@@ -11,6 +13,27 @@ export interface IauthProvider{
     providerId: string
 }
 
+// delivery agent
+export enum AvailableStatus {
+  AVAILABLE = "AVAILABLE",
+  BUSY = "BUSY",
+  OFFLINE = "OFFLINE"
+}
+
+export enum VehicleType{
+  bike = "bike",
+  car = "car",
+  van = "van",
+  other = "other"
+}
+
+export enum ExperienceLevel {
+  BEGINNER = "beginner",
+  INTERMEDIATE = "intermediate",
+  EXPERT = "expert",
+}
+// delivery agent
+
 export interface IUser {
   _id?: string;
   name: string;
@@ -23,4 +46,16 @@ export interface IUser {
   isBlocked?: boolean;
   role: Role;
   auths: IauthProvider[];
+
+  //  delivery agent
+
+  currentParcelId?: Types.ObjectId,
+  availableStatus?: AvailableStatus,
+  completedDeliveries?: number,
+  assignedParcels?: Types.ObjectId[],
+  vehicleType?: VehicleType;
+  licenseNumber?: string;
+  experienceLevel?: ExperienceLevel
+
+  // delivery agent
 }
