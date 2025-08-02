@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Role } from "../user/user.interface";
-import { ExperienceLevel, VehicleType } from "./deliveryAgent.interface";
+import { AvailableStatus, ExperienceLevel, VehicleType } from "./deliveryAgent.interface";
 
 export const createDeliveryAgentZodSchema = z.object({
     name: z
@@ -44,3 +44,10 @@ export const createDeliveryAgentZodSchema = z.object({
     role: z
         .literal(Role.DELIVERY_AGENT)
 })
+
+export const udpateDeliveryAgentStatusZodSchema = z.object({
+    availableStatus: z.enum(Object.values(AvailableStatus) as [string], {
+        errorMap: () => ({ message: "available Status must be one of: available, busy, offline" }),
+    }),
+})
+

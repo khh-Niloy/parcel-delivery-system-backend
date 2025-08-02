@@ -4,6 +4,7 @@ import { IUser } from "../user/user.interface";
 export enum AvailableStatus {
   AVAILABLE = "AVAILABLE",
   BUSY = "BUSY",
+  OFFLINE = "OFFLINE"
 }
 
 export enum VehicleType{
