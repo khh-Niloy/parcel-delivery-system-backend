@@ -1,8 +1,8 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { successResponse } from "../../utility/successResponse"
 import { parcelServices } from "./parcel.service"
 
-const createParcel = async(req: Request, res: Response)=>{
+const createParcel = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userInfo = req.user
         const newParcel = await parcelServices.createParcelService(req.body, userInfo)
@@ -12,14 +12,11 @@ const createParcel = async(req: Request, res: Response)=>{
             data: newParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const updateParcel = async(req: Request, res: Response)=>{
+const updateParcel = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const trackingId = req.params.trackingId
         const updateParcel = await parcelServices.updateParcelService(req.body, trackingId)
@@ -29,14 +26,11 @@ const updateParcel = async(req: Request, res: Response)=>{
             data: updateParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const updateParcelStatus = async(req: Request, res: Response)=>{
+const updateParcelStatus = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const trackingId = req.params.trackingId
         const updateParcelStatus = await parcelServices.updateParcelStatusService(req.body, trackingId)
@@ -46,14 +40,11 @@ const updateParcelStatus = async(req: Request, res: Response)=>{
             data: updateParcelStatus
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const assignDeliveryMan = async(req: Request, res: Response)=>{
+const assignDeliveryMan = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const trackingId = req.params.trackingId
         const updateParcelStatus = await parcelServices.assignDeliveryAgentService(trackingId)
@@ -63,14 +54,11 @@ const assignDeliveryMan = async(req: Request, res: Response)=>{
             data: updateParcelStatus
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const viewAllParcelSender = async(req: Request, res: Response)=>{
+const viewAllParcelSender = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userInfo = req.user
         const {allParcel, total} = await parcelServices.viewAllParcelSenderService(userInfo)
@@ -81,14 +69,11 @@ const viewAllParcelSender = async(req: Request, res: Response)=>{
             data: allParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const viewIncomingParcelReceiver = async(req: Request, res: Response)=>{
+const viewIncomingParcelReceiver = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userInfo = req.user
         const {allIncomingParcel, total} = await parcelServices.viewIncomingParcelReceiverService(userInfo)
@@ -99,15 +84,12 @@ const viewIncomingParcelReceiver = async(req: Request, res: Response)=>{
             data: allIncomingParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
 
-const allDeliveredParcelReceiver = async(req: Request, res: Response)=>{
+const allDeliveredParcelReceiver = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userInfo = req.user
         const {allDeliveredParcel, total} = await parcelServices.allDeliveredParcelReceiverService(userInfo)
@@ -118,14 +100,11 @@ const allDeliveredParcelReceiver = async(req: Request, res: Response)=>{
             data: allDeliveredParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const allParcel = async(req: Request, res: Response)=>{
+const allParcel = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const {allParcel, total} = await parcelServices.allParcelService()
         successResponse(res, {
@@ -135,10 +114,7 @@ const allParcel = async(req: Request, res: Response)=>{
             data: allParcel
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 

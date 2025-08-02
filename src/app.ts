@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express"
 import { routes } from "./app/route"
 import cookieParser from 'cookie-parser'
+import { globalErrorHandler } from "./app/middleware/globalErrorHandler"
+import notFound from "./app/middleware/notFound"
 
-export const app = express()
+const app = express()
 app.use(express.json())
 app.use(cookieParser())
 
@@ -13,3 +15,8 @@ app.get("/", (req: Request, res: Response)=>{
         message: "welcome to parcel delivery system backend"
     })
 })
+
+app.use(globalErrorHandler)
+app.use(notFound)
+
+export default app

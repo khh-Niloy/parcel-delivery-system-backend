@@ -1,8 +1,8 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { UserServices } from "./user.service"
 import { successResponse } from "../../utility/successResponse"
 
-const userRegister = async(req: Request, res: Response)=>{
+const userRegister = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const newUser = await UserServices.userRegisterService(req.body)
         successResponse(res, {
@@ -11,14 +11,11 @@ const userRegister = async(req: Request, res: Response)=>{
             data: newUser
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const updateUser = async(req: Request, res: Response)=>{
+const updateUser = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userId = req.params.id
         const updateUser = await UserServices.updateUserService(req.body, userId)
@@ -28,14 +25,11 @@ const updateUser = async(req: Request, res: Response)=>{
             data: updateUser
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     } 
 }
 
-const getAllUser = async(req: Request, res: Response)=>{
+const getAllUser = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const {allUser, totalUser} = await UserServices.getAllUserService()
         successResponse(res, {
@@ -45,10 +39,7 @@ const getAllUser = async(req: Request, res: Response)=>{
             data: allUser
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 

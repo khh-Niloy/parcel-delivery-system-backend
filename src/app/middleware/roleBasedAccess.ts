@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express"
 import { jwtToken } from "../utility/jwtTokens"
 import { User } from "../modules/user/user.model"
 import { Role } from "../modules/user/user.interface"
+import AppError from "../errorHelper/AppError"
 
 export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Response, next: NextFunction)=>{
     try {
@@ -14,19 +15,19 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
         console.log(user)
 
         if(!user){
-            throw new Error("user does not exist");
+            throw new AppError(400, "user does not exist");
         }
 
         if(!role.includes(user.role)){
-            throw new Error("you are not permitted to visit this route");
+            throw new AppError(400, "you are not permitted to visit this route");
         }
 
         if(user?.isDeleted){
-            throw new Error("you have been deleted!");
+            throw new AppError(400, "you have been deleted!");
         }
 
         if(user?.isBlocked){
-            throw new Error("you have been blocked!");
+            throw new AppError(400, "you have been blocked!");
         }
 
         if(![Role.ADMIN, Role.SUPER_ADMIN].includes(user.role) && (
@@ -34,8 +35,8 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
             req?.body?.isBlocked !== undefined ||
             req?.body?.role !== undefined
         )){
-            throw new Error(
-                "You are not permitted to update fields like isDeleted, isBlocked, or role."
+            throw new AppError(
+                400, "You are not permitted to update fields like isDeleted, isBlocked, or role."
             );
         }
 
@@ -43,8 +44,6 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
         next()
     } catch (error) {
         console.log("jwt error", error);
-        res.status(400).json({
-            message: (error as Error).message
-        })
+        next(error)
     }
 }

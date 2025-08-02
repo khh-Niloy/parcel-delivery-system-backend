@@ -5,6 +5,7 @@ import { cookiesManagement } from "../../utility/cookiesManagement"
 import { hashedPasswordFunc } from "../../utility/hashedPassword"
 import { jwtToken } from "../../utility/jwtTokens"
 import { Response } from "express"
+import AppError from "../../errorHelper/AppError"
 
 const userLoginService = async(payload: Partial<IUser>)=>{
     const {email, password} = payload
@@ -12,13 +13,13 @@ const userLoginService = async(payload: Partial<IUser>)=>{
     const user = await User.findOne({email})
 
     if(!user){
-        throw new Error("Please register first");
+        throw new AppError(400, "Please register first");
     }
 
     const isPasswordOK = await hashedPasswordFunc.checkHashedPassword(password as string, user.password as string)
 
     if(!isPasswordOK){
-        throw new Error("password not matched!");
+        throw new AppError(400, "password not matched!");
     }
 
     const jwtPayload = {
@@ -41,15 +42,15 @@ const getNewAccessTokenService = async(refreshToken: string)=>{
     const user = await User.findOne({email: userInfo.email})
 
     if(!user){
-        throw new Error("user not found");
+        throw new AppError(400, "user not found");
     }
 
     if(user.isBlocked){
-        throw new Error("user is blocked");
+        throw new AppError(400, "user is blocked");
     }
 
     if(user.isDeleted){
-        throw new Error("user is deleted");
+        throw new AppError(400, "user is deleted");
     }
 
     const jwtPayload = {
@@ -66,7 +67,7 @@ const changePasswordService = async(payload: { password: string }, user: JwtPayl
     const userInfo = await User.findOne({email: user.email})
 
     if(!userInfo){
-        throw new Error("user not found");
+        throw new AppError(400, "user not found");
     }
 
     const newHashedPassword = await hashedPasswordFunc.generateHashedPassword(payload.password)

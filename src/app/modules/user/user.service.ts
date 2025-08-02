@@ -1,3 +1,4 @@
+import AppError from "../../errorHelper/AppError"
 import { hashedPasswordFunc } from "../../utility/hashedPassword"
 import { IauthProvider, IUser } from "./user.interface"
 import { User } from "./user.model"
@@ -5,7 +6,7 @@ import { User } from "./user.model"
 const userRegisterService = async(payload: Partial<IUser>)=>{
     const isAlreadyExist = await User.findOne({email: payload.email})
     if(isAlreadyExist){
-        throw new Error("you already registered before");
+        throw new AppError(400, "you already registered before");
     }
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)

@@ -1,3 +1,4 @@
+import AppError from "../../errorHelper/AppError";
 import { hashedPasswordFunc } from "../../utility/hashedPassword";
 import { IauthProvider } from "../user/user.interface";
 import { IDeliveryAgent } from "./deliveryAgent.interface"
@@ -6,7 +7,7 @@ import { DeliveryAgent } from "./deliveryAgent.model";
 const createDeliveryAgentService = async(payload: Partial<IDeliveryAgent>)=>{
     const isAlreadyExist = await DeliveryAgent.findOne({email: payload.email})
     if(isAlreadyExist){
-        throw new Error("you already registered before");
+        throw new AppError(400, "you already registered before");
     }
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)

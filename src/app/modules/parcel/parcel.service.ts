@@ -8,6 +8,7 @@ import { Parcel } from "./parcel.model"
 import { StatusFlow } from "../../utility/statusFlow"
 import { DeliveryAgent } from "../deliveryAgent/deliveryAgent.model"
 import { AvailableStatus } from "../deliveryAgent/deliveryAgent.interface"
+import AppError from "../../errorHelper/AppError"
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
 
@@ -17,11 +18,11 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
     const senderInfo = await User.findById(userInfo.userId)
 
     if(!senderInfo){
-        throw new Error("sender not found");
+        throw new AppError(400, "sender not found");
     }
 
     if(!receiverInfo){
-        throw new Error("receiver not found");
+        throw new AppError(400, "receiver not found");
     }
 
     const fee = calculateFee(payload.weight as number)
@@ -55,7 +56,7 @@ const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)
 
     const parcel = await Parcel.findOne(filter)
     if(parcel?.status !== Status.REQUESTED && parcel?.status !== Status.APPROVED ){
-        throw new Error(`Sorry, parcel already on -> ${parcel?.status}`);
+        throw new AppError(400, `Sorry, parcel already on -> ${parcel?.status}`);
     }
 
     const updatePayload = {...payload}
@@ -73,7 +74,7 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
     if(!parcel){
-        throw new Error("parcel not found");
+        throw new AppError(400, "parcel not found");
     }
 
     const parcelCurrentStatus = parcel.status as keyof typeof StatusFlow
@@ -83,19 +84,19 @@ const updateParcelStatusService = async(payload: { status: Status, updatedBy: Ro
     const allowedRoles: Role[] = StatusFlow[parcelCurrentStatus].allowedRoles as Role[]
 
     if(!allowedRoles.includes(updateRequestRole)){
-        throw new Error(
+        throw new AppError(400, 
       `you are not permitted to select status to ${payload.status}`
     );
     }
 
     if(payload.updatedBy === Role.SENDER && [Status.BLOCKED, Status.APPROVED, Status.DISPATCHED].includes(payload.status)){
-        throw new Error(
+        throw new AppError(400, 
       `Sender can not update ${parcelCurrentStatus} to ${payload.status}`
     );
     }
 
     if(!allowedNextStatus.includes(payload.status)){
-        throw new Error(
+        throw new AppError(400, 
       `Invalid status transition from ${parcelCurrentStatus} to ${payload.status}`
     );
     }

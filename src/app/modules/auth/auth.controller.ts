@@ -1,9 +1,10 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import { authServices } from "./auth.service"
 import { cookiesManagement } from "../../utility/cookiesManagement"
 import { successResponse } from "../../utility/successResponse"
+import AppError from "../../errorHelper/AppError"
 
-const userLogin = async(req: Request, res: Response)=>{
+const userLogin = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userLogin = await authServices.userLoginService(req.body)
         const {accessRefreshToken, user} = userLogin
@@ -16,14 +17,11 @@ const userLogin = async(req: Request, res: Response)=>{
             data: {accessRefreshToken, user},
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const userLogOut = async(req: Request, res: Response)=>{
+const userLogOut = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         authServices.userLogOutService(res)
         successResponse(res, {
@@ -31,20 +29,17 @@ const userLogOut = async(req: Request, res: Response)=>{
             message: "user logged out",
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const getNewAccessToken = async(req: Request, res: Response)=>{
+const getNewAccessToken = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const refreshToken = req.cookies.refreshToken
         console.log(refreshToken)
 
         if(!refreshToken){
-            throw new Error("refresh token not found from cookies");
+            throw new AppError(400, "refresh token not found from cookies");
         }
 
         const tokens = await authServices.getNewAccessTokenService(refreshToken)
@@ -57,14 +52,11 @@ const getNewAccessToken = async(req: Request, res: Response)=>{
             data: tokens
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
-const changePassword = async(req: Request, res: Response)=>{
+const changePassword = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const user = req.user
         await authServices.changePasswordService(req.body, user)
@@ -73,10 +65,7 @@ const changePassword = async(req: Request, res: Response)=>{
             message: "password changed",
         })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: (error as Error).message
-        })
+        next(error)
     }
 }
 
