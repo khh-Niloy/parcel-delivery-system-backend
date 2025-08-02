@@ -25,7 +25,9 @@ It supports four user roles—**Sender**, **Receiver**, **Delivery Agent**, and 
 - POST /api/v1/parcel/create-parcel  
 - PATCH /api/v1/parcel/:trackingId  
 - PATCH /api/v1/parcel/status/:trackingId  
-- PATCH /api/v1/parcel/assign-delivery-agent/:trackingId  
+- PATCH /api/v1/parcel/assign-delivery-agent/:trackingId 
+
+- GET /api/v1/parcel/admin/all-parcels -> **Filtering** by any parcel field ( `searchTerm` and `sort`)
 
 - GET /api/v1/delivery-agent  
 - POST /api/v1/delivery-agent/register  
@@ -557,3 +559,5 @@ IF there is at least one waiting parcel:
 **Headers:**  
 `Authorization: <access_token>`
 
+**Filtering** by any parcel field ( `searchTerm` and `sort`)
+- /api/v1/parcel/admin/all-parcels?searchTerm=CONFIRMED
