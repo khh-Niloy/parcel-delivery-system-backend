@@ -113,7 +113,7 @@ const allDeliveredParcelReceiver = async(req: Request, res: Response, next: Next
 
 const allParcel = async(req: Request, res: Response, next: NextFunction)=>{
     try {
-        const {allParcel, total} = await parcelServices.allParcelService()
+        const {allParcel, total} = await parcelServices.allParcelService(req.query)
         successResponse(res, {
             status: 200,
             message: "all parcels",

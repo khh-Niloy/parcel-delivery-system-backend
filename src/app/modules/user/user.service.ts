@@ -82,11 +82,11 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
 
         const availableDeliveryAgent = await User.findById(deliveryAgentId).select("_id name phone")
 
-        const insertDeliveryAgentId = await Parcel.findOneAndUpdate({_id: parcel?._id}, {
+        await Parcel.findOneAndUpdate({_id: parcel?._id}, {
         assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
         }, {new: true})
 
-        const addParcelId = await User.findByIdAndUpdate(deliveryAgentId, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+        await User.findByIdAndUpdate(deliveryAgentId, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
         }
         
     }
