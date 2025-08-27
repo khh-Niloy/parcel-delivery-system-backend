@@ -6,13 +6,11 @@ import AppError from "../errorHelper/AppError"
 
 export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Response, next: NextFunction)=>{
     try {
-        const accessToken = req.headers.authorization
+        const accessToken = req.headers.authorization || req.cookies.accessToken
 
         const userInfo = jwtToken.verifyToken(accessToken as string)
 
         const user = await User.findOne({email: userInfo.email})
-
-        console.log(user)
 
         if(!user){
             throw new AppError(400, "user does not exist");
@@ -41,6 +39,7 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
         }
 
         req.user = userInfo
+        console.log("userInfo",req.user)
         next()
     } catch (error) {
         console.log("jwt error", error);

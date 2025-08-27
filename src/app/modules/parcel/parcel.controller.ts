@@ -125,7 +125,19 @@ const allParcel = async(req: Request, res: Response, next: NextFunction)=>{
     }
 }
 
-
+const singleParcel = async(req: Request, res: Response, next: NextFunction)=>{
+    try {
+        const trackingId = req.params.trackingId
+        const singleParcel = await parcelServices.singleParcelService(trackingId)
+        successResponse(res, {
+            status: 200,
+            message: "single parcel",
+            data: singleParcel
+        })
+    } catch (error) {
+        next(error)
+    }
+}
 
 export const parcelController = {
     createParcel,
@@ -135,5 +147,6 @@ export const parcelController = {
     viewAllParcelSender,
     viewIncomingParcelReceiver,
     allDeliveredParcelReceiver,
-    allParcel
+    allParcel,
+    singleParcel
 }

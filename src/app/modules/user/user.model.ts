@@ -35,7 +35,7 @@ export const userSchema = new Schema<IUser>({
 
 userSchema.pre("save", function (next) {
     if (this.role !== Role.DELIVERY_AGENT) {
-        this.assignedParcels = undefined;
+        this.set("assignedParcels", undefined, { strict: false });
     }
     next();
 });

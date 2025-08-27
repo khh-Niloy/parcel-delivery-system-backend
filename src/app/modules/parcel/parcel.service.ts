@@ -68,7 +68,7 @@ const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)
 }
 
 const updateParcelStatusService = async(payload: { status: Status, updatedBy: Role }, trackingId: string)=>{
-
+    console.log("payload", payload)
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
     if(!parcel){
@@ -236,7 +236,7 @@ const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
 }
 
 const viewIncomingParcelReceiverService = async(userInfo: JwtPayload)=>{
-    const allIncomingParcel = await Parcel.find({receiverId: userInfo.userId, status: { $nin: [Status.APPROVED, Status.DELIVERED, Status.CONFIRMED, Status.CANCELLED, Status.BLOCKED] }})
+    const allIncomingParcel = await Parcel.find({receiverId: userInfo.userId, status: { $nin: [Status.APPROVED, Status.CONFIRMED, Status.CANCELLED, Status.BLOCKED] }})
     const total = allIncomingParcel.length
     return {allIncomingParcel, total}
 }
@@ -264,6 +264,11 @@ const allParcelService = async(query: Record<string, unknown> = {})=>{
     return {allParcel, total}
 }
 
+const singleParcelService = async(trackingId: string)=>{
+    const singleParcel = await Parcel.findOne({trackingId: trackingId}).populate("receiverId", "phone")
+    return singleParcel
+}
+
 export const parcelServices = {
     createParcelService,
     updateParcelService,
@@ -272,5 +277,6 @@ export const parcelServices = {
     viewAllParcelSenderService,
     viewIncomingParcelReceiverService,
     allDeliveredParcelReceiverService,
-    allParcelService
+    allParcelService,
+    singleParcelService
 }

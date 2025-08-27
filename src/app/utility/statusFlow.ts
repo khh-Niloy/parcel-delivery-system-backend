@@ -32,7 +32,7 @@ export const StatusFlow = {
   },
   CANCELLED: {
     next: [],
-    allowedRoles: [],
+    allowedRoles: [Role.ADMIN, Role.SENDER],
   },
   BLOCKED: {
     next: [],

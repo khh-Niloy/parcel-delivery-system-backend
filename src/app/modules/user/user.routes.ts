@@ -13,6 +13,9 @@ userRoutes.patch("/:id", roleBasedAccess(...Object.values(Role)),validateZodSche
 
 userRoutes.get("/all-user",roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), userController.getAllUser)
 
+userRoutes.get("/get-me", roleBasedAccess(...Object.values(Role)), userController.getMe)
+
 userRoutes.get("/all-delivery-agent", roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), userController.getAllDeliveryAgent)
 
 userRoutes.patch("/update-availabe-status/:id", roleBasedAccess(Role.DELIVERY_AGENT), validateZodSchema(udpateDeliveryAgentStatusZodSchema), userController.updateAvailableStatus)
+
