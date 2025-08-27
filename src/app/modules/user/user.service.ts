@@ -32,8 +32,13 @@ const updateUserService = async(payload: Partial<IUser>, userId: string)=>{
 }
 
 const getAllUserService = async()=>{
-    const allUser = await User.find({role: { $nin: [Role.DELIVERY_AGENT, Role.SUPER_ADMIN, Role.ADMIN] }})
-    const totalUser = allUser.length
+    const allSender = await User.find({role: Role.SENDER})
+    const allDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT})
+    const allReceiver = await User.find({role: Role.RECEIVER})
+    const totalUser = allSender.length + allDeliveryAgent.length + allReceiver.length
+
+    const allUser = [...allSender, ...allDeliveryAgent, ...allReceiver]
+
     return {allUser, totalUser}
 }
 
@@ -95,10 +100,20 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
     return updateDeliveryAgentStatus
 }
 
+const getMeService = async(userId: string)=>{
+    console.log(userId)
+    const me = await User.findById(userId)
+    if(!me){
+        throw new AppError(400, "user not found")
+    }
+    return me
+}
+
 export const UserServices = {
     userRegisterService,
     updateUserService,
     getAllUserService,
     getAllDeliveryAgentService,
-    updateAvailableStatusService
+    updateAvailableStatusService,
+    getMeService
 }

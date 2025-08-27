@@ -13,7 +13,9 @@ parcelRoutes.get("/incoming-parcels", roleBasedAccess(Role.RECEIVER), parcelCont
 
 parcelRoutes.get("/delivered-parcels", roleBasedAccess(Role.RECEIVER), parcelController.allDeliveredParcelReceiver)
 
-parcelRoutes.get("/admin/all-parcels", roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), parcelController.allParcel)
+parcelRoutes.get("/single-parcel/:trackingId", roleBasedAccess(Role.SENDER, Role.ADMIN, Role.SUPER_ADMIN), parcelController.singleParcel)
+
+parcelRoutes.get("/admin/all-parcels", roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN, Role.DELIVERY_AGENT, Role.RECEIVER), parcelController.allParcel)
 
 parcelRoutes.post("/create-parcel", roleBasedAccess(Role.SENDER), validateZodSchema(createParcelZodSchema), parcelController.createParcel)
 

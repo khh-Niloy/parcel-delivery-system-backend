@@ -71,10 +71,25 @@ const updateAvailableStatus = async(req: Request, res: Response, next: NextFunct
     }
 }
 
+const getMe = async(req: Request, res: Response, next: NextFunction)=>{
+    try {
+        const userInfo = req.user
+        const me = await UserServices.getMeService(userInfo.userId)
+        successResponse(res, {
+            status: 200,
+            message: "me",
+            data: me
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const userController = {
     userRegister,
     updateUser,
     getAllUser,
     getAllDeliveryAgent,
-    updateAvailableStatus
+    updateAvailableStatus,
+    getMe
 }
