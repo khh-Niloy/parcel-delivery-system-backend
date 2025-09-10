@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IassignedDeliveryAgent, IParcel, ITrackingEvents, Status } from "./parcel.interface";
+import { IassignedDeliveryAgent, IParcel, IReceiverInfo, ITrackingEvents, Status } from "./parcel.interface";
 import { Role } from "../user/user.interface";
 
 const trackingSchema = new Schema<ITrackingEvents>({
@@ -16,11 +16,18 @@ const assignedDeliveryAgentSchema = new Schema<IassignedDeliveryAgent>({
     phone: {type: String},
 }, {timestamps: true, versionKey: false})
 
+const receiverInfoSchema = new Schema<IReceiverInfo>({
+    _id: {type: Schema.Types.ObjectId},
+    phone: {type: String},
+    address: {type: String},
+}, {timestamps: false, versionKey: false, _id: false})
+
 const parcelSchema = new Schema<IParcel>({
     type: {type: String},
     weight: {type: Number, required: true},
     senderId: {type: Schema.Types.ObjectId, ref: "User", required: true},
-    receiverId: {type: Schema.Types.ObjectId, ref: "User", required: true},
+    // receiverId: {type: Schema.Types.ObjectId, ref: "User"},
+    receiverInfo: {type: receiverInfoSchema},
     deliveryAddress: {type: String, required: true},
     pickupAddress: {type: String, required: true},
     deliveryDate: {type: Date, required: true},
@@ -28,7 +35,8 @@ const parcelSchema = new Schema<IParcel>({
     status: {type: String, enum: Object.values(Status), required: true},
     trackingEvents: {type: [trackingSchema], default: []},
     trackingId: {type: String, required: true},
-    assignedDeliveryAgent: {type: assignedDeliveryAgentSchema}
+    assignedDeliveryAgent: {type: assignedDeliveryAgentSchema},
+    isPaid: {type: Boolean, default: false}
 
 }, {timestamps: true, versionKey: false})
 

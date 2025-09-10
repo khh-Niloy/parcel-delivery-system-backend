@@ -12,15 +12,20 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
 
     const {receiverPhoneNumber, ...restPayload} = payload
 
-    const receiverInfo = await User.findOne({phone: receiverPhoneNumber})
+    const receiverExist = await User.findOne({phone: receiverPhoneNumber})
     const senderInfo = await User.findById(userInfo.userId)
 
     if(!senderInfo){
         throw new AppError(400, "sender is not found");
     }
 
-    if(!receiverInfo){
-        throw new AppError(400, "receiver is not found");
+    let receiver = receiverExist?._id || {
+        phone: receiverPhoneNumber,
+        address: restPayload.deliveryAddress
+    }
+
+    if(!receiver){
+        throw new AppError(400, "can not create parcel with receiver info");
     }
 
     const fee = calculateFee(payload.weight as number)
@@ -37,7 +42,7 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
     const parcelInfo = {
         ...restPayload,
         senderId: senderInfo?._id,
-        receiverId: receiverInfo._id,
+        receiverInfo: receiver,
         fee,
         status: Status.REQUESTED,
         trackingEvents,
@@ -67,124 +72,124 @@ const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)
     return updateParcelInfo
 }
 
-const updateParcelStatusService = async(payload: { status: Status, updatedBy: Role }, trackingId: string)=>{
-    console.log("payload", payload)
-    const parcel = await Parcel.findOne({trackingId: trackingId})
+// const updateParcelStatusService = async(payload: { status: Status, updatedBy: Role }, trackingId: string)=>{
+//     console.log("payload", payload)
+//     const parcel = await Parcel.findOne({trackingId: trackingId})
 
-    if(!parcel){
-        throw new AppError(400, "parcel not found");
-    }
+//     if(!parcel){
+//         throw new AppError(400, "parcel not found");
+//     }
 
-    const parcelCurrentStatus = parcel.status as keyof typeof StatusFlow
-    const updateRequestRole = payload.updatedBy as Role
+//     const parcelCurrentStatus = parcel.status as keyof typeof StatusFlow
+//     const updateRequestRole = payload.updatedBy as Role
 
-    const allowedNextStatus: Status[] = StatusFlow[parcelCurrentStatus].next as Status[]
-    const allowedRoles: Role[] = StatusFlow[parcelCurrentStatus].allowedRoles as Role[]
+//     const allowedNextStatus: Status[] = StatusFlow[parcelCurrentStatus].next as Status[]
+//     const allowedRoles: Role[] = StatusFlow[parcelCurrentStatus].allowedRoles as Role[]
 
-    if(!allowedRoles.includes(updateRequestRole)){
-        throw new AppError(400, 
-      `you are not permitted to select status to ${payload.status}`
-    );
-    }
+//     if(!allowedRoles.includes(updateRequestRole)){
+//         throw new AppError(400, 
+//       `you are not permitted to select status to ${payload.status}`
+//     );
+//     }
 
-    if(payload.updatedBy === Role.SENDER && [Status.BLOCKED, Status.APPROVED, Status.DISPATCHED].includes(payload.status)){
-        throw new AppError(400, 
-      `Sender can not update ${parcelCurrentStatus} to ${payload.status}`
-    );
-    }
+//     if(payload.updatedBy === Role.SENDER && [Status.BLOCKED, Status.APPROVED, Status.DISPATCHED].includes(payload.status)){
+//         throw new AppError(400, 
+//       `Sender can not update ${parcelCurrentStatus} to ${payload.status}`
+//     );
+//     }
 
-    if(!allowedNextStatus.includes(payload.status)){
-        throw new AppError(400, 
-      `Invalid status transition from ${parcelCurrentStatus} to ${payload.status}`
-    );
-    }
+//     if(!allowedNextStatus.includes(payload.status)){
+//         throw new AppError(400, 
+//       `Invalid status transition from ${parcelCurrentStatus} to ${payload.status}`
+//     );
+//     }
 
-    if (payload.status === Status.DELIVERED) {
-    await User.findOneAndUpdate(
-        { currentParcelId: parcel._id },
-        {
-            availableStatus: AvailableStatus.AVAILABLE,
-            currentParcelId: null,
-            $inc: { completedDeliveries: 1 },
-        }
-    );
+//     if (payload.status === Status.DELIVERED) {
+//     await User.findOneAndUpdate(
+//         { currentParcelId: parcel._id },
+//         {
+//             availableStatus: AvailableStatus.AVAILABLE,
+//             currentParcelId: null,
+//             $inc: { completedDeliveries: 1 },
+//         }
+//     );
 
-    console.log("before setTimeout");
+//     console.log("before setTimeout");
 
-    setTimeout(() => {
-        (async () => {
-            try {
-                console.log("entered setTimeout");
+//     setTimeout(() => {
+//         (async () => {
+//             try {
+//                 console.log("entered setTimeout");
 
-                const allAvailableDeliveryAgent = await User.find({
-                    role: Role.DELIVERY_AGENT,
-                    availableStatus: AvailableStatus.AVAILABLE,
-                });
+//                 const allAvailableDeliveryAgent = await User.find({
+//                     role: Role.DELIVERY_AGENT,
+//                     availableStatus: AvailableStatus.AVAILABLE,
+//                 });
 
-                console.log("available agents", allAvailableDeliveryAgent);
+//                 console.log("available agents", allAvailableDeliveryAgent);
 
-                if (allAvailableDeliveryAgent.length > 0) {
-                    const allWaitingParcels = await Parcel.find({ status: Status.WAITING }).sort({ createdAt: 1 });
+//                 if (allAvailableDeliveryAgent.length > 0) {
+//                     const allWaitingParcels = await Parcel.find({ status: Status.WAITING }).sort({ createdAt: 1 });
 
-                    console.log("waiting parcels", allWaitingParcels);
+//                     console.log("waiting parcels", allWaitingParcels);
 
-                    while (allWaitingParcels.length > 0 && allAvailableDeliveryAgent.length > 0) {
-                        const parcel = allWaitingParcels.shift();
-                        const deliveryAgent = allAvailableDeliveryAgent.shift();
+//                     while (allWaitingParcels.length > 0 && allAvailableDeliveryAgent.length > 0) {
+//                         const parcel = allWaitingParcels.shift();
+//                         const deliveryAgent = allAvailableDeliveryAgent.shift();
 
-                        if (!parcel || !deliveryAgent) break;
+//                         if (!parcel || !deliveryAgent) break;
 
-                        const updateStatusLog = {
-                            status: Status.DISPATCHED,
-                            location: parcel.pickupAddress,
-                            note: "Parcel picked up from sender",
-                            timestamp: new Date().toISOString(),
-                            updatedBy: Role.DELIVERY_AGENT,
-                        };
+//                         const updateStatusLog = {
+//                             status: Status.DISPATCHED,
+//                             location: parcel.pickupAddress,
+//                             note: "Parcel picked up from sender",
+//                             timestamp: new Date().toISOString(),
+//                             updatedBy: Role.DELIVERY_AGENT,
+//                         };
 
-                        await Parcel.findByIdAndUpdate(
-                            parcel._id,
-                            {
-                                assignedDeliveryAgent: deliveryAgent,
-                                status: Status.DISPATCHED,
-                                $push: { trackingEvents: updateStatusLog },
-                            },
-                            { new: true }
-                        );
+//                         await Parcel.findByIdAndUpdate(
+//                             parcel._id,
+//                             {
+//                                 assignedDeliveryAgent: deliveryAgent,
+//                                 status: Status.DISPATCHED,
+//                                 $push: { trackingEvents: updateStatusLog },
+//                             },
+//                             { new: true }
+//                         );
 
-                        await User.findByIdAndUpdate(
-                            deliveryAgent._id,
-                            {
-                                currentParcelId: parcel._id,
-                                availableStatus: AvailableStatus.BUSY,
-                                $push: { assignedParcels: parcel._id },
-                            },
-                            { new: true }
-                        );
-                    }
-                }
-            } catch (error) {
-                console.error("Error in delayed assignment:", error);
-            }
-        })();
-    }, 60 * 1000);
+//                         await User.findByIdAndUpdate(
+//                             deliveryAgent._id,
+//                             {
+//                                 currentParcelId: parcel._id,
+//                                 availableStatus: AvailableStatus.BUSY,
+//                                 $push: { assignedParcels: parcel._id },
+//                             },
+//                             { new: true }
+//                         );
+//                     }
+//                 }
+//             } catch (error) {
+//                 console.error("Error in delayed assignment:", error);
+//             }
+//         })();
+//     }, 60 * 1000);
 
-    console.log("done");
-}
+//     console.log("done");
+// }
 
 
-    const updateStatusLog = {
-        ...payload,
-        timestamp: new Date().toISOString()
-    }
+//     const updateStatusLog = {
+//         ...payload,
+//         timestamp: new Date().toISOString()
+//     }
 
-    const updateStatus = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
-        $set: {status : payload.status},
-        $push: {trackingEvents: updateStatusLog}
-    }, {new : true})
+//     const updateStatus = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
+//         $set: {status : payload.status},
+//         $push: {trackingEvents: updateStatusLog}
+//     }, {new : true})
 
-    return updateStatus
-}
+//     return updateStatus
+// }
 
 const assignDeliveryAgentService = async(trackingId: string)=>{
 
@@ -194,39 +199,45 @@ const assignDeliveryAgentService = async(trackingId: string)=>{
 
     const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
 
-    if(allAvailableDeliveryAgent.length == 0){
-        isWaiting = true
-        const updateStatusLog = {
-        status: Status.WAITING,
-        location: "",
-        note: "Could not find any available delivery agent, if someone available will be assigned",
-        timestamp: new Date().toISOString(),
-        updatedBy: Role.ADMIN
-        }
+    // if(allAvailableDeliveryAgent.length == 0){
+    //     isWaiting = true
+    //     const updateStatusLog = {
+    //     status: Status.WAITING,
+    //     location: "",
+    //     note: "Could not find any available delivery agent, if someone available will be assigned",
+    //     timestamp: new Date().toISOString(),
+    //     updatedBy: Role.ADMIN
+    //     }
 
-        await Parcel.findOneAndUpdate({trackingId: trackingId}, {status: Status.WAITING, $push: {trackingEvents: updateStatusLog}}, {new: true})
-        return
-    }
+    //     await Parcel.findOneAndUpdate({trackingId: trackingId}, {status: Status.WAITING, $push: {trackingEvents: updateStatusLog}}, {new: true})
+    //     return
+    // }
 
-    const availableDeliveryAgent = allAvailableDeliveryAgent[0]
+    // based on Rider Availability, 
+    // Location Proximity, 
+    // ETA (Estimated Time of Arrival), 
+    // Parcel Priority,
+    // and Rider Experience Level
 
-    // console.log(availableDeliveryAgent)
+    // const availableDeliveryAgent = allAvailableDeliveryAgent[0]
 
-    const updateStatusLog = {
-        status: Status.DISPATCHED,
-        location: parcel?.pickupAddress,
-        note: "Parcel picked up from sender",
-        timestamp: new Date().toISOString(),
-        updatedBy: Role.DELIVERY_AGENT
-    }
+    // // console.log(availableDeliveryAgent)
 
-    const insertDeliveryAgentId = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
-        assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
-    }, {new: true})
+    // const updateStatusLog = {
+    //     status: Status.DISPATCHED,
+    //     location: parcel?.pickupAddress,
+    //     note: "Parcel picked up from sender",
+    //     timestamp: new Date().toISOString(),
+    //     updatedBy: Role.DELIVERY_AGENT
+    // }
 
-    const addParcelId = await User.findByIdAndUpdate(availableDeliveryAgent._id, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+    // const insertDeliveryAgentId = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
+    //     assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
+    // }, {new: true})
 
-    return {insertDeliveryAgentId, addParcelId, isWaiting}
+    // const addParcelId = await User.findByIdAndUpdate(availableDeliveryAgent._id, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})
+
+    // return {insertDeliveryAgentId, addParcelId, isWaiting}
 }
 
 const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
@@ -269,14 +280,28 @@ const singleParcelService = async(trackingId: string)=>{
     return singleParcel
 }
 
+const makePaymentService = async(trackingId: string)=>{
+    const makePayment = await Parcel.findOneAndUpdate({trackingId: trackingId}, {isPaid: true}, {new: true})
+    const trackingEvents : ITrackingEvents = {
+        status: Status.APPROVED,
+        // location: restPayload.pickupAddress as string,
+        note: "Parcel payment made",
+        timestamp: new Date().toISOString(),
+        updatedBy: Role.SENDER
+    }
+    await Parcel.findOneAndUpdate({trackingId: trackingId}, { $push: { trackingEvents: trackingEvents } }, { new: true })
+    return makePayment
+}
+
 export const parcelServices = {
     createParcelService,
     updateParcelService,
-    updateParcelStatusService,
+    // updateParcelStatusService,
     assignDeliveryAgentService,
     viewAllParcelSenderService,
     viewIncomingParcelReceiverService,
     allDeliveredParcelReceiverService,
     allParcelService,
-    singleParcelService
+    singleParcelService,
+    makePaymentService
 }
