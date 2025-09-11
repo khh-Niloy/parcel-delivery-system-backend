@@ -1,9 +1,14 @@
 import { model, Schema } from "mongoose";
-import { AvailableStatus, ExperienceLevel, IauthProvider, IUser, Role, VehicleType } from "./user.interface";
+import { AvailableStatus, ExperienceLevel, IauthProvider, Ilocation, IUser, Role, VehicleType } from "./user.interface";
 
 const authProviderSchema = new Schema<IauthProvider>({
     provider: {type: String, required: true},
     providerId: {type: String, required: true}
+}, {versionKey: false, _id: false})
+
+const locationSchema = new Schema<Ilocation>({
+    latitude: { type: Number },
+    longitude: { type: Number },
 }, {versionKey: false, _id: false})
 
 export const userSchema = new Schema<IUser>({
@@ -26,7 +31,8 @@ export const userSchema = new Schema<IUser>({
     assignedParcels: [{ type: Schema.Types.ObjectId, ref: "Parcel" }],
     vehicleType: {type: String, enum: Object.values(VehicleType),},
     licenseNumber: { type: String },
-    experienceLevel: { type: String, enum: Object.values(ExperienceLevel) }
+    experienceLevel: { type: String, enum: Object.values(ExperienceLevel) },
+    currentLocation: { type: locationSchema },
 
     // delivery agent
 

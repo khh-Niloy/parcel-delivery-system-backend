@@ -1,4 +1,4 @@
-import { z } from "zod";
+  import { z } from "zod";
 
 export const createParcelZodSchema = z.object({
   type: z.string({
@@ -21,8 +21,13 @@ export const createParcelZodSchema = z.object({
     required_error: "Delivery address is required",
   }),
 
-  pickupAddress: z.string({
-    required_error: "Pickup address is required",
+  pickupAddress: z.object({
+    latitude: z.number({
+      required_error: "Pickup address latitude is required",
+    }),
+    longitude: z.number({
+      required_error: "Pickup address longitude is required",
+    }),
   }),
 
   deliveryDate: z
@@ -50,8 +55,13 @@ export const updateParcelZodSchema = z.object({
     required_error: "Delivery address is required",
   }),
 
-  pickupAddress: z.string({
-    required_error: "Pickup address is required",
+  pickupAddress: z.object({
+    latitude: z.number({
+      required_error: "Pickup address latitude is required",
+    }),
+    longitude: z.number({
+      required_error: "Pickup address longitude is required",
+    }),
   }),
 
   deliveryDate: z

@@ -32,6 +32,11 @@ export enum ExperienceLevel {
   INTERMEDIATE = "intermediate",
   EXPERT = "expert",
 }
+
+export interface Ilocation {
+  latitude: number;
+  longitude: number;
+}
 // delivery agent
 
 export interface IUser {
@@ -55,7 +60,8 @@ export interface IUser {
   assignedParcels?: Types.ObjectId[],
   vehicleType?: VehicleType;
   licenseNumber?: string;
-  experienceLevel?: ExperienceLevel
+  experienceLevel?: ExperienceLevel;
+  currentLocation?: Ilocation;
 
   // delivery agent
 }

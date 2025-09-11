@@ -1,10 +1,16 @@
 import { model, Schema } from "mongoose";
-import { IassignedDeliveryAgent, IParcel, IReceiverInfo, ITrackingEvents, Status } from "./parcel.interface";
+import { IassignedDeliveryAgent, IParcel, IpickupAddress, IReceiverInfo, ITrackingEvents, Status } from "./parcel.interface";
 import { Role } from "../user/user.interface";
+
+const pickupAddressSchema = new Schema<IpickupAddress>({
+    latitude: {type: Number},
+    longitude: {type: Number},
+    address: {type: String},
+}, {timestamps: false, versionKey: false, _id: false})
 
 const trackingSchema = new Schema<ITrackingEvents>({
     status: {type: String, enum: Status, required: true},
-    location: {type: String, required: true},
+    location: {type: pickupAddressSchema},
     note: {type: String},
     timestamp: {type: String, required: true},
     updatedBy: {type: String, enum: Role, required: true},
@@ -29,7 +35,7 @@ const parcelSchema = new Schema<IParcel>({
     // receiverId: {type: Schema.Types.ObjectId, ref: "User"},
     receiverInfo: {type: receiverInfoSchema},
     deliveryAddress: {type: String, required: true},
-    pickupAddress: {type: String, required: true},
+    pickupAddress: {type: pickupAddressSchema, required: true},
     deliveryDate: {type: Date, required: true},
     fee: {type: Number, required: true},
     status: {type: String, enum: Object.values(Status), required: true},

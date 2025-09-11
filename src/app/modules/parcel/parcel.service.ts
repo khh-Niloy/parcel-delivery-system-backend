@@ -1,12 +1,12 @@
 import { JwtPayload } from "jsonwebtoken"
-import { IParcel, ITrackingEvents, Status } from "./parcel.interface"
+import { IParcel, IpickupAddress, ITrackingEvents, Status } from "./parcel.interface"
 import { User } from "../user/user.model"
 import { AvailableStatus, Role } from "../user/user.interface"
 import { createTrackingId } from "../../utility/createTrackingId"
 import { calculateFee } from "../../utility/calculateFee"
 import { Parcel } from "./parcel.model"
-import { StatusFlow } from "../../utility/statusFlow"
 import AppError from "../../errorHelper/AppError"
+import { getETA, IAllDeliveryAgent } from "../../utility/getETA"
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
 
@@ -33,7 +33,7 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
 
     const trackingEvents : ITrackingEvents = {
         status: Status.REQUESTED,
-        location: restPayload.pickupAddress as string,
+        location: restPayload.pickupAddress as IpickupAddress,
         note: `Parcel request submitted by ${senderInfo?.name}, ${senderInfo?.email}`,
         timestamp: new Date().toISOString(),
         updatedBy: Role.SENDER
@@ -197,7 +197,7 @@ const assignDeliveryAgentService = async(trackingId: string)=>{
 
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
-    const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone")
+    const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone currentLocation")
 
     // if(allAvailableDeliveryAgent.length == 0){
     //     isWaiting = true
@@ -218,6 +218,30 @@ const assignDeliveryAgentService = async(trackingId: string)=>{
     // ETA (Estimated Time of Arrival), 
     // Parcel Priority,
     // and Rider Experience Level
+
+    // [
+    //     {
+    //       _id: new ObjectId('68ad5002cf5bb7e5125ae534'),
+    //       name: 'Hasib Hossain Niloy',
+    //       phone: '01915910291',
+    //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
+    //     },
+    //     {
+    //       _id: new ObjectId('68af3ff708c1534fb5da050f'),
+    //       name: 'kamal uddin',
+    //       phone: '01915910298',
+    //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
+    //     }
+    //   ]
+    
+    // console.log(parcel?.pickupAddress)
+
+
+    const {selectedDeliveryAgent, duration, durationUnit, distance, distanceUnit} = await getETA(parcel?.pickupAddress.latitude as number, parcel?.pickupAddress.longitude as number, allAvailableDeliveryAgent as unknown as IAllDeliveryAgent[])
+    // console.log(selectedDeliveryAgent)
+
+
+
 
     // const availableDeliveryAgent = allAvailableDeliveryAgent[0]
 
