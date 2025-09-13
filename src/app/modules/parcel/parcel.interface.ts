@@ -21,6 +21,7 @@ export interface ITrackingEvents{
     note: string
     timestamp: string,
     updatedBy: Role
+    deliveryDuration?: string,
 }
 
 export interface IassignedDeliveryAgent{

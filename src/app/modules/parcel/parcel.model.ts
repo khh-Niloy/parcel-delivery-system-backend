@@ -14,6 +14,7 @@ const trackingSchema = new Schema<ITrackingEvents>({
     note: {type: String},
     timestamp: {type: String, required: true},
     updatedBy: {type: String, enum: Role, required: true},
+    deliveryDuration: {type: String},
 }, {timestamps: true, versionKey: false, _id: false})
 
 const assignedDeliveryAgentSchema = new Schema<IassignedDeliveryAgent>({

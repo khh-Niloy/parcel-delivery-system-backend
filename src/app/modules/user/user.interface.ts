@@ -6,6 +6,7 @@ export enum Role{
     "SENDER" = "SENDER",
     "RECEIVER" = "RECEIVER",
     "DELIVERY_AGENT" = "DELIVERY_AGENT",
+    "SYSTEM" = "SYSTEM",
 }
 
 export interface IauthProvider{

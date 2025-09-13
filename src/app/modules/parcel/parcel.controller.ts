@@ -30,36 +30,44 @@ const updateParcel = async(req: Request, res: Response, next: NextFunction)=>{
     }
 }
 
-// const updateParcelStatus = async(req: Request, res: Response, next: NextFunction)=>{
-//     try {
-//         const trackingId = req.params.trackingId
-//         const updateParcelStatus = await parcelServices.updateParcelStatusService(req.body, trackingId)
-//         successResponse(res, {
-//             status: 201,
-//             message: "parcel status updated",
-//             data: updateParcelStatus
-//         })
-//     } catch (error) {
-//         next(error)
-//     }
-// }
+const updateParcelStatus = async(req: Request, res: Response, next: NextFunction)=>{
+    try {
+        const trackingId = req.params.trackingId
+        const userInfo = req.user
+        const lat = parseFloat(req.query.lat as string)
+        const lng = parseFloat(req.query.lng as string)
+        const updateParcelStatus = await parcelServices.updateParcelStatusService(req.body, trackingId, userInfo, lat, lng)
+        successResponse(res, {
+            status: 201,
+            message: "parcel status updated",
+            data: updateParcelStatus
+        })
+    } catch (error) {
+        next(error)
+    }
+}
 
 const assignDeliveryMan = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const trackingId = req.params.trackingId
-        const assignResult = await parcelServices.assignDeliveryAgentService(trackingId)
-        // const insertDeliveryAgentId = assignResult?.insertDeliveryAgentId ?? null
-        // const addParcelId = assignResult?.addParcelId ?? null
-        // const isWaiting = assignResult?.isWaiting ?? true
+        const lat = parseFloat(req.query.lat as string)
+        const lng = parseFloat(req.query.lng as string)
+        const assignResult = await parcelServices.assignDeliveryAgentService(trackingId, lat, lng)
+        
+        if (!assignResult) {
+            successResponse(res, {
+                status: 200,
+                message: "Could not find any available delivery agent, if someone available will be assigned",
+                data: null
+            })
+            return
+        }
 
-        // const data = isWaiting === true ? null : {insertDeliveryAgentId, addParcelId}
-        // const message = isWaiting === true ? "Could not find any available delivery agent, if someone available will be assigned" : "delivery agent assgined and dispatched"
-
-        // successResponse(res, {
-        //     status: 201,
-        //     message: message,
-        //     data: data
-        // })
+        successResponse(res, {
+            status: 201,
+            message: "delivery agent assgined",
+            data: assignResult
+        })
     } catch (error) {
         next(error)
     }
@@ -94,7 +102,6 @@ const viewIncomingParcelReceiver = async(req: Request, res: Response, next: Next
         next(error)
     }
 }
-
 
 const allDeliveredParcelReceiver = async(req: Request, res: Response, next: NextFunction)=>{
     try {
@@ -157,7 +164,7 @@ const makePayment = async(req: Request, res: Response, next: NextFunction)=>{
 export const parcelController = {
     createParcel,
     updateParcel,
-    // updateParcelStatus,
+    updateParcelStatus,
     assignDeliveryMan,
     viewAllParcelSender,
     viewIncomingParcelReceiver,
