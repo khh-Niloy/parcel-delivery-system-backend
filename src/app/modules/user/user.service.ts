@@ -1,6 +1,6 @@
 import AppError from "../../errorHelper/AppError"
 import { hashedPasswordFunc } from "../../utility/hashedPassword"
-import { Status } from "../parcel/parcel.interface"
+import { ITrackingEvents, Status } from "../parcel/parcel.interface"
 import { Parcel } from "../parcel/parcel.model"
 import { AvailableStatus, IauthProvider, IUser, Role } from "./user.interface"
 import { User } from "./user.model"
@@ -49,7 +49,7 @@ const getAllDeliveryAgentService = async()=>{
     return {allDeliveryAgent, total}  
 }
 
-const updateAvailableStatusService = async(payload: {availableStatus: AvailableStatus}, deliveryAgentId: string)=>{
+const updateAvailableStatusService = async(payload: {availableStatus: AvailableStatus, lat: number, lng: number}, deliveryAgentId: string)=>{
     if(payload.availableStatus === AvailableStatus.BUSY){
         throw new AppError(400, "you can only make available or offline")
     }
@@ -72,15 +72,15 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
 
         nextStatus = AvailableStatus.BUSY
 
-        const allWaitingParcels = await Parcel.find({status: Status.WAITING}).sort({ createdAt: 1 })
+        let allPendingParcels = await Parcel.find({ status: Status.PENDING }).sort({ createdAt: 1 });
 
-        if(allWaitingParcels.length > 0){
-        const parcel = allWaitingParcels.shift()
+        if(allPendingParcels.length > 0){
+        const parcel = allPendingParcels.shift()
 
-        const updateStatusLog = {
-            status: Status.DISPATCHED,
-            location: "location",
-            note: "Parcel picked up from sender",
+        const updateStatusLog : ITrackingEvents = {
+            status: Status.ASSIGNED,
+            location: {latitude: payload.lat, longitude: payload.lng},
+            note: "pending parcel assigned to delivery agent",
             timestamp: new Date().toISOString(),
             updatedBy: Role.DELIVERY_AGENT
         }
@@ -88,7 +88,7 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
         const availableDeliveryAgent = await User.findById(deliveryAgentId).select("_id name phone")
 
         await Parcel.findOneAndUpdate({_id: parcel?._id}, {
-        assignedDeliveryAgent: availableDeliveryAgent, status:Status.DISPATCHED, $push: {trackingEvents: updateStatusLog}
+        assignedDeliveryAgent: availableDeliveryAgent, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
         }, {new: true})
 
         await User.findByIdAndUpdate(deliveryAgentId, {currentParcelId: parcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: parcel?._id}}, {new: true})

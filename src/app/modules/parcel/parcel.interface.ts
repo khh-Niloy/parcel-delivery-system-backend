@@ -3,24 +3,25 @@ import { Role } from "../user/user.interface";
 
 export enum Status {
   REQUESTED = "REQUESTED",
-  APPROVED = "APPROVED",
-  CANCELLED = "CANCELLED",
   BLOCKED = "BLOCKED",
-  DISPATCHED = "DISPATCHED",
-  IN_TRANSIT = "IN_TRANSIT",
+  CANCELLED = "CANCELLED",
+  APPROVED = "APPROVED",
+  PENDING = "PENDING",
+  ASSIGNED = "ASSIGNED",
+  PICKEDUP = "PICKEDUP",
+  ON_THE_WAY = "ON_THE_WAY",
   DELIVERED = "DELIVERED",
-  RETURNED = "RETURNED",
   CONFIRMED = "CONFIRMED",
-  WAITING = "WAITING"
+  RETURNED = "RETURNED",
 }
-// RESCHEDULED
 
 export interface ITrackingEvents{
     status: Status,
-    location: string,
+    location?: IpickupAddress,
     note: string
     timestamp: string,
     updatedBy: Role
+    deliveryDuration?: string,
 }
 
 export interface IassignedDeliveryAgent{
@@ -29,19 +30,34 @@ export interface IassignedDeliveryAgent{
   phone: string
 }
 
+export interface IReceiverInfo{
+  _id?: Types.ObjectId,
+  phone: string,
+  address: string
+}
+
+export interface IpickupAddress{
+  latitude?: number,
+  longitude?: number,
+  address?: string
+}
+
+
 export interface IParcel{
     _id?: Types.ObjectId,
     type: string,
     weight: number,
     senderId: Types.ObjectId,
-    receiverId: Types.ObjectId,
+    // receiverId?: Types.ObjectId,
+    receiverInfo?: IReceiverInfo,
     deliveryAddress: string,
-    pickupAddress: string,
+    pickupAddress: IpickupAddress,
     deliveryDate: Date,
     fee: number,
     status: Status,
     trackingEvents?: ITrackingEvents[],
     trackingId: string,
     receiverPhoneNumber?: string,
-    assignedDeliveryAgent?: IassignedDeliveryAgent
+    assignedDeliveryAgent?: IassignedDeliveryAgent,
+    isPaid?: boolean
 } 

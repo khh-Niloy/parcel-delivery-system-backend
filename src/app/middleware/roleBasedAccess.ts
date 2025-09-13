@@ -6,7 +6,8 @@ import AppError from "../errorHelper/AppError"
 
 export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Response, next: NextFunction)=>{
     try {
-        const accessToken = req.headers.authorization || req.cookies.accessToken
+        // const accessToken = req.headers.authorization || req.cookies.accessToken
+        const accessToken = req.cookies.accessToken
 
         const userInfo = jwtToken.verifyToken(accessToken as string)
 
