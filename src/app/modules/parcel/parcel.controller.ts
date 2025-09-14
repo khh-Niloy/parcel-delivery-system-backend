@@ -5,11 +5,11 @@ import { parcelServices } from "./parcel.service"
 const createParcel = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userInfo = req.user
-        const newParcel = await parcelServices.createParcelService(req.body, userInfo)
+        const newParcelWithPayment = await parcelServices.createParcelService(req.body, userInfo)
         successResponse(res, {
             status: 201,
             message: "new parcel created",
-            data: newParcel
+            data: newParcelWithPayment
         })
     } catch (error) {
         next(error)
@@ -146,20 +146,20 @@ const singleParcel = async(req: Request, res: Response, next: NextFunction)=>{
     }
 }
 
-const makePayment = async(req: Request, res: Response, next: NextFunction)=>{
-    try {
-        const trackingId = req.params.trackingId
-        console.log(trackingId)
-        const makePayment = await parcelServices.makePaymentService(trackingId)
-        successResponse(res, {
-            status: 200,
-            message: "make payment",
-            data: makePayment
-        })
-    } catch (error) {
-        next(error)
-    }
-}
+// const makePayment = async(req: Request, res: Response, next: NextFunction)=>{
+//     try {
+//         const trackingId = req.params.trackingId
+//         console.log(trackingId)
+//         const makePayment = await parcelServices.makePaymentService(trackingId)
+//         successResponse(res, {
+//             status: 200,
+//             message: "make payment",
+//             data: makePayment
+//         })
+//     } catch (error) {
+//         next(error)
+//     }
+// }
 
 export const parcelController = {
     createParcel,
@@ -171,6 +171,6 @@ export const parcelController = {
     allDeliveredParcelReceiver,
     allParcel,
     singleParcel,
-    makePayment
+    // makePayment
 
 }

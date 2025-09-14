@@ -43,7 +43,8 @@ const parcelSchema = new Schema<IParcel>({
     trackingEvents: {type: [trackingSchema], default: []},
     trackingId: {type: String, required: true},
     assignedDeliveryAgent: {type: assignedDeliveryAgentSchema},
-    isPaid: {type: Boolean, default: false}
+    isPaid: {type: Boolean, default: false},
+    paymentId: {type: Schema.Types.ObjectId, ref: "Payment"}
 
 }, {timestamps: true, versionKey: false})
 

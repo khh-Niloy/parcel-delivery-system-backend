@@ -60,4 +60,5 @@ export interface IParcel{
     receiverPhoneNumber?: string,
     assignedDeliveryAgent?: IassignedDeliveryAgent,
     isPaid?: boolean
+    paymentId?: Types.ObjectId,
 } 

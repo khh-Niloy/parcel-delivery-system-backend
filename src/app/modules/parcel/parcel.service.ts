@@ -9,9 +9,22 @@ import AppError from "../../errorHelper/AppError"
 import { getETA, IAllDeliveryAgent } from "../../utility/getETA"
 import { StatusFlow } from "../../utility/statusFlow"
 import { DeliveredStatusHandler } from "../../utility/DeliveredStatusHandler"
+import { PAYMENT_STATUS } from "../payment/payment.interface"
+import { getTransactionId } from "../../utility/getTransactionId"
+import { Payment } from "../payment/payment.model"
+import { sslService } from "../sslCommerz/sslCommerz.service"
+import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface"
+import jwt, { SignOptions } from "jsonwebtoken"
+import { envVars } from "../../config/env.config"
+
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
 
+    const session = await Parcel.startSession()
+    session.startTransaction()
+
+    try {
+    
     const {receiverPhoneNumber, ...restPayload} = payload
 
     const receiverExist = await User.findOne({phone: receiverPhoneNumber})
@@ -51,8 +64,53 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
         trackingId,
     }
     // console.log(parcelInfo)
-    const newParcel = await Parcel.create(parcelInfo)
-    return newParcel
+    const newParcel = await Parcel.create([parcelInfo], {session})
+
+
+
+    // * create payment record
+
+    const transactionId = getTransactionId();
+
+    const paymentInfo = {
+        parcelId: newParcel[0]?._id,
+        amount: fee,
+        status: PAYMENT_STATUS.UNPAID,
+        transactionId: transactionId,
+        trackingId: trackingId,
+    }
+
+    const newPayment = await Payment.create([paymentInfo], {session})
+
+    const newlyAddedParcel = await Parcel.findByIdAndUpdate(newParcel[0]?._id, {paymentId: newPayment[0]?._id}, {new: true, session})
+    .populate("senderId", "name email phone address")
+
+    if(!newlyAddedParcel){
+        throw new AppError(400, "parcel not found")
+    }
+
+    const sslPayload : ISSLCommerz = {
+        name: (newlyAddedParcel?.senderId as any).name,
+        email: (newlyAddedParcel?.senderId as any).email,   
+        phoneNumber: (newlyAddedParcel?.senderId as any).phone,
+        address: (newlyAddedParcel?.senderId as any).address as string,
+        amount: newlyAddedParcel?.fee,
+        transactionId: transactionId
+    }
+
+    const sslPayment = await sslService.sslPaymentInit(sslPayload)
+
+    await Payment.findByIdAndUpdate(newPayment[0]?._id, {url: sslPayment.GatewayPageURL}, {new: true, session})
+
+    await session.commitTransaction()
+    session.endSession()
+    return {newParcel, newPayment}
+
+    } catch (error) {
+        session.abortTransaction()
+        session.endSession()
+        throw (error as Error).message
+    }
 }
 
 const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)=>{
@@ -199,7 +257,7 @@ const assignDeliveryAgentService = async(trackingId: string, lat: number, lng: n
 }
 
 const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
-    const allParcel = await Parcel.find({senderId: userInfo.userId})
+    const allParcel = await Parcel.find({senderId: userInfo.userId}).populate("paymentId", "url")
     const total = allParcel.length
     return {allParcel, total}
 }
@@ -238,18 +296,12 @@ const singleParcelService = async(trackingId: string)=>{
     return singleParcel
 }
 
-const makePaymentService = async(trackingId: string)=>{
-    const makePayment = await Parcel.findOneAndUpdate({trackingId: trackingId}, {status: Status.APPROVED, isPaid: true}, {new: true})
-    const trackingEvents : ITrackingEvents = {
-        status: Status.APPROVED,
-        // location: restPayload.pickupAddress as string,
-        note: "Parcel payment made",
-        timestamp: new Date().toISOString(),
-        updatedBy: Role.SENDER
-    }
-    await Parcel.findOneAndUpdate({trackingId: trackingId}, { $push: { trackingEvents: trackingEvents } }, { new: true })
-    return makePayment
-}
+// const makePaymentService = async(trackingId: string)=>{
+//     const paymentRecord = await Payment.findOne({trackingId: trackingId})
+//     if(!paymentRecord){
+//         throw new AppError(400, "payment not found")
+//     }
+// }
 
 export const parcelServices = {
     createParcelService,
@@ -261,5 +313,5 @@ export const parcelServices = {
     allDeliveredParcelReceiverService,
     allParcelService,
     singleParcelService,
-    makePaymentService
+    // makePaymentService
 }

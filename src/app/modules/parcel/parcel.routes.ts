@@ -21,7 +21,7 @@ parcelRoutes.post("/create-parcel", roleBasedAccess(Role.SENDER), validateZodSch
 
 parcelRoutes.patch("/:trackingId", roleBasedAccess(Role.SENDER, Role.ADMIN, Role.SUPER_ADMIN), validateZodSchema(updateParcelZodSchema), parcelController.updateParcel)
 
-parcelRoutes.patch("/payment/:trackingId", roleBasedAccess(Role.SENDER, Role.ADMIN, Role.SUPER_ADMIN), parcelController.makePayment)
+// parcelRoutes.patch("/payment/:trackingId", roleBasedAccess(Role.SENDER, Role.ADMIN, Role.SUPER_ADMIN), parcelController.makePayment)
 
 parcelRoutes.patch("/status/:trackingId", roleBasedAccess(...Object.values(Role)), parcelController.updateParcelStatus)
 
