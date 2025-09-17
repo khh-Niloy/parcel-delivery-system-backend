@@ -106,7 +106,7 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
 }
 
 const getMeService = async(userId: string)=>{
-    console.log(userId)
+    // console.log(userId)
     const me = await User.findById(userId)
     if(!me){
         throw new AppError(400, "user not found")
