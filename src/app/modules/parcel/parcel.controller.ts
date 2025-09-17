@@ -47,31 +47,31 @@ const updateParcelStatus = async(req: Request, res: Response, next: NextFunction
     }
 }
 
-const assignDeliveryMan = async(req: Request, res: Response, next: NextFunction)=>{
-    try {
-        const trackingId = req.params.trackingId
-        const lat = parseFloat(req.query.lat as string)
-        const lng = parseFloat(req.query.lng as string)
-        const assignResult = await parcelServices.assignDeliveryAgentService(trackingId, lat, lng)
+// const assignDeliveryMan = async(req: Request, res: Response, next: NextFunction)=>{
+//     try {
+//         const trackingId = req.params.trackingId
+//         const lat = parseFloat(req.query.lat as string)
+//         const lng = parseFloat(req.query.lng as string)
+//         const assignResult = await parcelServices.assignDeliveryAgentService(trackingId, lat, lng)
         
-        if (!assignResult) {
-            successResponse(res, {
-                status: 200,
-                message: "Could not find any available delivery agent, if someone available will be assigned",
-                data: null
-            })
-            return
-        }
+//         if (!assignResult) {
+//             successResponse(res, {
+//                 status: 200,
+//                 message: "Could not find any available delivery agent, if someone available will be assigned",
+//                 data: null
+//             })
+//             return
+//         }
 
-        successResponse(res, {
-            status: 201,
-            message: "delivery agent assgined",
-            data: assignResult
-        })
-    } catch (error) {
-        next(error)
-    }
-}
+//         successResponse(res, {
+//             status: 201,
+//             message: "delivery agent assgined",
+//             data: assignResult
+//         })
+//     } catch (error) {
+//         next(error)
+//     }
+// }
 
 const viewAllParcelSender = async(req: Request, res: Response, next: NextFunction)=>{
     try {
@@ -165,7 +165,7 @@ export const parcelController = {
     createParcel,
     updateParcel,
     updateParcelStatus,
-    assignDeliveryMan,
+    // assignDeliveryMan,
     viewAllParcelSender,
     viewIncomingParcelReceiver,
     allDeliveredParcelReceiver,

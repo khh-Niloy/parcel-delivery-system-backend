@@ -1,45 +1,83 @@
 import { ITrackingEvents, Status } from "../parcel/parcel.interface"
 import { Parcel } from "../parcel/parcel.model"
-import { Role } from "../user/user.interface"
+import { AvailableStatus, Role } from "../user/user.interface"
 import { PAYMENT_STATUS } from "./payment.interface"
 import { Payment } from "./payment.model"
+import { User } from "../user/user.model"
+import { getETA, IAllDeliveryAgent } from "../../utility/getETA"
 
 const successPaymentService = async(query : Record<string, string>)=>{
     const session = await Payment.startSession()
-    session.startTransaction()
     try {
+        await session.startTransaction()
+
+        // Payment success service started
+        
         const paymentRecord = await Payment.findOne({transactionId: query.transactionId})
-        const updatedPayment = await Payment.findByIdAndUpdate(paymentRecord?._id, {status: PAYMENT_STATUS.PAID}, {new: true, session})
-
-        if(!updatedPayment){
-            throw new Error("Parcel not found")
-        }
-
-        const updateParcel = await Parcel.findByIdAndUpdate(paymentRecord?.parcelId, {isPaid: true, status: Status.APPROVED},
-            {new: true, session}
-        )
-
-        if (!updateParcel) {
-            throw new Error("Parcel not found")
-        }
+        await Payment.findByIdAndUpdate(paymentRecord?._id, {status: PAYMENT_STATUS.PAID}, {new: true, session})
+        // console.log("updatedPayment", updatedPayment)
 
         const trackingEvents : ITrackingEvents = {
             status: Status.APPROVED,
             // location: restPayload.pickupAddress as string,
-            note: "Parcel payment approved",
+            note: "Parcel approved by system after payment",
             timestamp: new Date().toISOString(),
             updatedBy: Role.SYSTEM
         }
-        await Parcel.findOneAndUpdate({trackingId: paymentRecord?.trackingId}, { $push: { trackingEvents: trackingEvents } }, { new: true })
+        const updateParcel = await Parcel.findByIdAndUpdate(paymentRecord?.parcelId, {isPaid: true, status: Status.APPROVED, $push: {trackingEvents: trackingEvents}},
+            {new: true, session}
+        )
+        // console.log("updateParcel", updateParcel)
+
+
+        // * assign delivery agent
+
+
+        const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone currentLocation")
+
+        if(allAvailableDeliveryAgent.length == 0){
+            const updateStatusLog = {
+                status: Status.PENDING,
+                // location: "",
+                note: "Could not find any available delivery agent, if someone available will be assigned",
+                timestamp: new Date().toISOString(),
+                updatedBy: Role.SYSTEM
+            }
+            await Parcel.findOneAndUpdate({trackingId: updateParcel?.trackingId}, {status: Status.PENDING, $push: {trackingEvents: updateStatusLog}}, {new: true, session})
+            await session.commitTransaction();
+            return {success: true, message: "payment success, but could not find any delivery agent"}
+        }
+
+        const {selectedDeliveryAgent} = await getETA(updateParcel?.pickupAddress.latitude as number, updateParcel?.pickupAddress.longitude as number, allAvailableDeliveryAgent as unknown as IAllDeliveryAgent[])
+
+        const updateStatusLog : ITrackingEvents = {
+            status: Status.ASSIGNED,
+            // location: {
+            //     latitude: lat,
+            //     longitude: lng,
+            // },
+            note: "Parcel assigned to delivery agent",
+            timestamp: new Date().toISOString(),
+            updatedBy: Role.SYSTEM
+        }
+
+        const insertDeliveryAgentInParcel = await Parcel.findOneAndUpdate({trackingId: updateParcel?.trackingId}, {
+        assignedDeliveryAgent: selectedDeliveryAgent, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
+        }, {new: true, session})
+
+        // console.log("insertDeliveryAgentInParcel", insertDeliveryAgentInParcel)
+
+        const addParcelIdInDeliveryAgent = await User.findByIdAndUpdate(selectedDeliveryAgent?._id, {currentParcelId: insertDeliveryAgentInParcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: insertDeliveryAgentInParcel?._id}}, {new: true, session})
+
+        // console.log("addParcelIdInDeliveryAgent", addParcelIdInDeliveryAgent)
 
         await session.commitTransaction()
-        session.endSession()
-
-        return {success: true, message: "payment success"}
+        return {success: true, message: "payment success", insertDeliveryAgentInParcel, addParcelIdInDeliveryAgent}
     } catch (error) {
-        session.abortTransaction()
-        session.endSession()
+        await session.abortTransaction()
         throw (error as Error).message
+    } finally {
+        session.endSession()
     }
 }
 // const failPaymentService = async(query : Record<string, string>)=>{

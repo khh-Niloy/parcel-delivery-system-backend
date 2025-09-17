@@ -3,8 +3,8 @@ import { Types } from "mongoose";
 
 export interface IAllDeliveryAgent{
   _id: Types.ObjectId;
-  name: String;
-  phone: String;
+  name: string;
+  phone: string;
   currentLocation: { latitude: number; longitude: number; }
 }
 
@@ -21,19 +21,20 @@ export async function getETA(pickupLat: number, pickupLng: number, allAvailableD
   let displayDistance: number;
   let distanceUnit: string;
 
+  // eslint-disable-next-line @typescript-eslint/prefer-for-of
   for(let i = 0; i < allAvailableDeliveryAgent.length; i++){
 
-    let riderLat = allAvailableDeliveryAgent[i].currentLocation.latitude
-    let riderLng = allAvailableDeliveryAgent[i].currentLocation.longitude
+    const riderLat = allAvailableDeliveryAgent[i].currentLocation.latitude
+    const riderLng = allAvailableDeliveryAgent[i].currentLocation.longitude
 
-    console.log(riderLat, riderLng)
+    // console.log(riderLat, riderLng)
 
     const url = `http://router.project-osrm.org/route/v1/driving/${riderLng},${riderLat};${pickupLng},${pickupLat}?overview=false`;
     
     try {
       const res = await axios.get(url);
-      console.log("duration", res.data.routes[0].duration/60)
-      console.log("distance", res.data.routes[0].distance)
+      // console.log("duration", res.data.routes[0].duration/60)
+      // console.log("distance", res.data.routes[0].distance)
 
       if(min_eta > res.data.routes[0].duration){
         min_eta = res.data.routes[0].duration

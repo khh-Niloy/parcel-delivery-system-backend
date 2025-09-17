@@ -1,12 +1,11 @@
 import { JwtPayload } from "jsonwebtoken"
-import { IParcel, IpickupAddress, ITrackingEvents, Status } from "./parcel.interface"
+import { Iaddress, IParcel, ITrackingEvents, Status } from "./parcel.interface"
 import { User } from "../user/user.model"
-import { AvailableStatus, Role } from "../user/user.interface"
+import { Role } from "../user/user.interface"
 import { createTrackingId } from "../../utility/createTrackingId"
 import { calculateFee } from "../../utility/calculateFee"
 import { Parcel } from "./parcel.model"
 import AppError from "../../errorHelper/AppError"
-import { getETA, IAllDeliveryAgent } from "../../utility/getETA"
 import { StatusFlow } from "../../utility/statusFlow"
 import { DeliveredStatusHandler } from "../../utility/DeliveredStatusHandler"
 import { PAYMENT_STATUS } from "../payment/payment.interface"
@@ -14,11 +13,11 @@ import { getTransactionId } from "../../utility/getTransactionId"
 import { Payment } from "../payment/payment.model"
 import { sslService } from "../sslCommerz/sslCommerz.service"
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface"
-import jwt, { SignOptions } from "jsonwebtoken"
-import { envVars } from "../../config/env.config"
 
 
 const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayload)=>{
+
+    // Processing parcel creation payload
 
     const session = await Parcel.startSession()
     session.startTransaction()
@@ -34,10 +33,13 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
         throw new AppError(400, "sender is not found");
     }
 
-    let receiver = receiverExist?._id || {
+    // console.log("receiverExist", receiverExist)
+
+    const receiver = receiverExist?._id || {
         phone: receiverPhoneNumber,
         address: restPayload.deliveryAddress
     }
+    // console.log("receiver", receiver)
 
     if(!receiver){
         throw new AppError(400, "can not create parcel with receiver info");
@@ -48,7 +50,7 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
 
     const trackingEvents : ITrackingEvents = {
         status: Status.REQUESTED,
-        location: restPayload.pickupAddress as IpickupAddress,
+        location: restPayload.pickupAddress as Iaddress,
         note: `Parcel request submitted by ${senderInfo?.name}, ${senderInfo?.email}`,
         timestamp: new Date().toISOString(),
         updatedBy: Role.SENDER
@@ -88,12 +90,15 @@ const createParcelService = async(payload: Partial<IParcel>, userInfo: JwtPayloa
     if(!newlyAddedParcel){
         throw new AppError(400, "parcel not found")
     }
-
     const sslPayload : ISSLCommerz = {
-        name: (newlyAddedParcel?.senderId as any).name,
-        email: (newlyAddedParcel?.senderId as any).email,   
-        phoneNumber: (newlyAddedParcel?.senderId as any).phone,
-        address: (newlyAddedParcel?.senderId as any).address as string,
+        // @ts-expect-error - senderId is populated with user data
+        name: (newlyAddedParcel?.senderId as { name: string }).name,
+        // @ts-expect-error - senderId is populated with user data
+        email: (newlyAddedParcel?.senderId as { email: string }).email,   
+        // @ts-expect-error - senderId is populated with user data
+        phoneNumber: (newlyAddedParcel?.senderId as { phone: string }).phone,
+        // @ts-expect-error - senderId is populated with user data
+        address: (newlyAddedParcel?.senderId as { address: string }).address as string,
         amount: newlyAddedParcel?.fee,
         transactionId: transactionId
     }
@@ -133,7 +138,7 @@ const updateParcelService = async(payload: Partial<IParcel>, trackingId: string)
 }
 
 const updateParcelStatusService = async(payload: { status: Status }, trackingId: string, userInfo: JwtPayload, lat: number, lng: number)=>{
-    console.log("payload", payload)
+    // Processing parcel status update payload
     const parcel = await Parcel.findOne({trackingId: trackingId})
 
     if(!parcel){
@@ -173,12 +178,17 @@ const updateParcelStatusService = async(payload: { status: Status }, trackingId:
     let updateStatusLog = {}
 
     if(payload.status == Status.DELIVERED){
-        updateStatusLog = await DeliveredStatusHandler(parcel, payload)
+        updateStatusLog = DeliveredStatusHandler(parcel, payload)
     }
+
 
     if(payload.status != Status.DELIVERED){
         updateStatusLog = {
             ...payload,
+            location: {
+                latitude: lat,
+                longitude: lng,
+            },
             timestamp: new Date().toISOString(),
         } as ITrackingEvents
     }
@@ -191,70 +201,70 @@ const updateParcelStatusService = async(payload: { status: Status }, trackingId:
     return updateStatus
 }
 
-const assignDeliveryAgentService = async(trackingId: string, lat: number, lng: number)=>{
+// const assignDeliveryAgentService = async(trackingId: string, _lat: number, _lng: number)=>{
 
-    let canNotFindAnyDeliveryAgent = false
+//     let canNotFindAnyDeliveryAgent = false
 
-    const parcel = await Parcel.findOne({trackingId: trackingId})
+//     const parcel = await Parcel.findOne({trackingId: trackingId})
 
-    const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone currentLocation")
+//     const allAvailableDeliveryAgent = await User.find({role: Role.DELIVERY_AGENT, availableStatus: AvailableStatus.AVAILABLE}).select("_id name phone currentLocation")
 
-    if(allAvailableDeliveryAgent.length == 0){
-        canNotFindAnyDeliveryAgent = true
-        const updateStatusLog = {
-        status: Status.PENDING,
-        // location: "",
-        note: "Could not find any available delivery agent, if someone available will be assigned",
-        timestamp: new Date().toISOString(),
-        updatedBy: Role.SYSTEM
-        }
+//     if(allAvailableDeliveryAgent.length == 0){
+//         canNotFindAnyDeliveryAgent = true
+//         const updateStatusLog = {
+//         status: Status.PENDING,
+//         // location: "",
+//         note: "Could not find any available delivery agent, if someone available will be assigned",
+//         timestamp: new Date().toISOString(),
+//         updatedBy: Role.SYSTEM
+//         }
 
-        await Parcel.findOneAndUpdate({trackingId: trackingId}, {status: Status.PENDING, $push: {trackingEvents: updateStatusLog}}, {new: true})
-        return
-    }
+//         await Parcel.findOneAndUpdate({trackingId: trackingId}, {status: Status.PENDING, $push: {trackingEvents: updateStatusLog}}, {new: true})
+//         return
+//     }
 
-    // * based on Rider Availability, 
-    // * Location Proximity, 
-    // * ETA (Estimated Time of Arrival), 
-    // * Parcel Priority,
-    // * and Rider Experience Level
+//     // * based on Rider Availability, 
+//     // * Location Proximity, 
+//     // * ETA (Estimated Time of Arrival), 
+//     // * Parcel Priority,
+//     // * and Rider Experience Level
 
-    // [
-    //     {
-    //       _id: new ObjectId('68ad5002cf5bb7e5125ae534'),
-    //       name: 'Hasib Hossain Niloy',
-    //       phone: '01915910291',
-    //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
-    //     },
-    //     {
-    //       _id: new ObjectId('68af3ff708c1534fb5da050f'),
-    //       name: 'kamal uddin',
-    //       phone: '01915910298',
-    //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
-    //     }
-    //   ]
+//     // [
+//     //     {
+//     //       _id: new ObjectId('68ad5002cf5bb7e5125ae534'),
+//     //       name: 'Hasib Hossain Niloy',
+//     //       phone: '01915910291',
+//     //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
+//     //     },
+//     //     {
+//     //       _id: new ObjectId('68af3ff708c1534fb5da050f'),
+//     //       name: 'kamal uddin',
+//     //       phone: '01915910298',
+//     //       currentLocation: { latitude: 23.7969, longitude: 90.3863 }
+//     //     }
+//     //   ]
     
-    const {selectedDeliveryAgent, duration, durationUnit, distance, distanceUnit} = await getETA(parcel?.pickupAddress.latitude as number, parcel?.pickupAddress.longitude as number, allAvailableDeliveryAgent as unknown as IAllDeliveryAgent[])
+//     const {selectedDeliveryAgent} = await getETA(parcel?.pickupAddress.latitude as number, parcel?.pickupAddress.longitude as number, allAvailableDeliveryAgent as unknown as IAllDeliveryAgent[])
 
-    const updateStatusLog : ITrackingEvents = {
-        status: Status.ASSIGNED,
-        location: {
-            latitude: lat,
-            longitude: lng,
-        },
-        note: "Parcel assigned to delivery agent",
-        timestamp: new Date().toISOString(),
-        updatedBy: Role.SYSTEM
-    }
+//     const updateStatusLog : ITrackingEvents = {
+//         status: Status.ASSIGNED,
+//         // location: {
+//         //     latitude: lat,
+//         //     longitude: lng,
+//         // },
+//         note: "Parcel assigned to delivery agent",
+//         timestamp: new Date().toISOString(),
+//         updatedBy: Role.SYSTEM
+//     }
 
-    const insertDeliveryAgentInParcel = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
-        assignedDeliveryAgent: selectedDeliveryAgent, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
-    }, {new: true})
+//     const insertDeliveryAgentInParcel = await Parcel.findOneAndUpdate({trackingId: trackingId}, {
+//         assignedDeliveryAgent: selectedDeliveryAgent, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
+//     }, {new: true})
 
-    const addParcelIdInDeliveryAgent = await User.findByIdAndUpdate(selectedDeliveryAgent?._id, {currentParcelId: insertDeliveryAgentInParcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: insertDeliveryAgentInParcel?._id}}, {new: true})
+//     const addParcelIdInDeliveryAgent = await User.findByIdAndUpdate(selectedDeliveryAgent?._id, {currentParcelId: insertDeliveryAgentInParcel?._id, availableStatus: AvailableStatus.BUSY, $push: {assignedParcels: insertDeliveryAgentInParcel?._id}}, {new: true})
 
-    return {insertDeliveryAgentInParcel, addParcelIdInDeliveryAgent, canNotFindAnyDeliveryAgent}
-}
+//     return {insertDeliveryAgentInParcel, addParcelIdInDeliveryAgent, canNotFindAnyDeliveryAgent}
+// }
 
 const viewAllParcelSenderService = async(userInfo: JwtPayload)=>{
     const allParcel = await Parcel.find({senderId: userInfo.userId}).populate("paymentId", "url")
@@ -307,7 +317,7 @@ export const parcelServices = {
     createParcelService,
     updateParcelService,
     updateParcelStatusService,
-    assignDeliveryAgentService,
+    // assignDeliveryAgentService,
     viewAllParcelSenderService,
     viewIncomingParcelReceiverService,
     allDeliveredParcelReceiverService,

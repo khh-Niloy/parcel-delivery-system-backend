@@ -17,8 +17,8 @@ export enum Status {
 
 export interface ITrackingEvents{
     status: Status,
-    location?: IpickupAddress,
-    note: string
+    location?: Iaddress,
+    note?: string
     timestamp: string,
     updatedBy: Role
     deliveryDuration?: string,
@@ -33,10 +33,10 @@ export interface IassignedDeliveryAgent{
 export interface IReceiverInfo{
   _id?: Types.ObjectId,
   phone: string,
-  address: string
+  address: Iaddress
 }
 
-export interface IpickupAddress{
+export interface Iaddress{
   latitude?: number,
   longitude?: number,
   address?: string
@@ -48,10 +48,10 @@ export interface IParcel{
     type: string,
     weight: number,
     senderId: Types.ObjectId,
-    // receiverId?: Types.ObjectId,
+    receiverId?: Types.ObjectId,
     receiverInfo?: IReceiverInfo,
-    deliveryAddress: string,
-    pickupAddress: IpickupAddress,
+    deliveryAddress: Iaddress,
+    pickupAddress: Iaddress,
     deliveryDate: Date,
     fee: number,
     status: Status,

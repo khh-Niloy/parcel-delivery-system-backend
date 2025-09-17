@@ -4,11 +4,11 @@ import { successResponse } from "../../utility/successResponse"
 
 const userRegister = async(req: Request, res: Response, next: NextFunction)=>{
     try {
-        const newUser = await UserServices.userRegisterService(req.body)
+        await UserServices.userRegisterService(req.body)
         successResponse(res, {
             status: 200,
             message: "user registered",
-            data: newUser
+            // data: newUser
         })
     } catch (error) {
         next(error)

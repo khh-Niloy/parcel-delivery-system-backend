@@ -29,6 +29,7 @@ interface IEnvVars {
   }
   URL_ACCESS_SECRET: string
   URL_ACCESS_EXPIRES: string
+  BACKEND_URL: string
 }
 
 const loadEnvVars = (): IEnvVars => {
@@ -56,6 +57,7 @@ const loadEnvVars = (): IEnvVars => {
     "SSL_IPN_URL",
     "URL_ACCESS_SECRET",
     "URL_ACCESS_EXPIRES",
+    "BACKEND_URL",
   ];
   requiredEnvVar.forEach((key) => {
     if (!process.env[key]) {
@@ -88,6 +90,7 @@ const loadEnvVars = (): IEnvVars => {
     },
     URL_ACCESS_SECRET: process.env.URL_ACCESS_SECRET as string,
     URL_ACCESS_EXPIRES: process.env.URL_ACCESS_EXPIRES as string,
+    BACKEND_URL: process.env.BACKEND_URL as string,
   };
 };
 

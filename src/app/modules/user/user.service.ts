@@ -6,18 +6,22 @@ import { AvailableStatus, IauthProvider, IUser, Role } from "./user.interface"
 import { User } from "./user.model"
 
 const userRegisterService = async(payload: Partial<IUser>)=>{
+    console.log("userRegisterService", payload)
     const isAlreadyExist = await User.findOne({email: payload.email})
     if(isAlreadyExist){
         throw new AppError(400, "you already registered before, so please login");
     }
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)
+    payload.address = {
+        address: payload.address?.address as string
+    }
 
     const auths : IauthProvider = {provider: "credential", providerId: payload.email as string}
 
     const userCreatePayload = {
         ...payload, auths, ...(payload.role === Role.DELIVERY_AGENT && {
-            availableStatus: AvailableStatus.AVAILABLE,
+            availableStatus: AvailableStatus.OFFLINE,
             completedDeliveries : 0
         })
     }
@@ -53,6 +57,7 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
     if(payload.availableStatus === AvailableStatus.BUSY){
         throw new AppError(400, "you can only make available or offline")
     }
+    console.log("updateAvailableStatusService", payload)
     // console.log(deliveryAgentId, payload.availableStatus)
 
     const deliveryAgent = await User.findById(deliveryAgentId)
@@ -72,7 +77,7 @@ const updateAvailableStatusService = async(payload: {availableStatus: AvailableS
 
         nextStatus = AvailableStatus.BUSY
 
-        let allPendingParcels = await Parcel.find({ status: Status.PENDING }).sort({ createdAt: 1 });
+        const allPendingParcels = await Parcel.find({ status: Status.PENDING }).sort({ createdAt: 1 });
 
         if(allPendingParcels.length > 0){
         const parcel = allPendingParcels.shift()

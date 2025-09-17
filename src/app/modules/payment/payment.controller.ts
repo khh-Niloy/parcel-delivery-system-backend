@@ -1,7 +1,5 @@
 import { Request, Response } from "express"
 import { envVars } from "../../config/env.config"
-import { sslService } from "../sslCommerz/sslCommerz.service"
-import { successResponse } from "../../utility/successResponse"
 import { paymentServices } from "./payment.service"
 
 const successPayment = async(req: Request, res: Response)=>{
@@ -9,7 +7,7 @@ const successPayment = async(req: Request, res: Response)=>{
         const query = req.query
         const updatePaymentStatus = await paymentServices.successPaymentService(query as Record<string, string>)
         if(updatePaymentStatus.success){
-            res.redirect(`${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}?transactionId=${query.transactionId}&amount=${query.amount}&status=success`)
+            res.redirect(`${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}`)
         }
     } catch (error) {
         res.status(400).json({

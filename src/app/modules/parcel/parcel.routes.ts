@@ -25,4 +25,4 @@ parcelRoutes.patch("/:trackingId", roleBasedAccess(Role.SENDER, Role.ADMIN, Role
 
 parcelRoutes.patch("/status/:trackingId", roleBasedAccess(...Object.values(Role)), parcelController.updateParcelStatus)
 
-parcelRoutes.patch("/assign-delivery-agent/:trackingId", roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), parcelController.assignDeliveryMan)
+// parcelRoutes.patch("/assign-delivery-agent/:trackingId", roleBasedAccess(Role.ADMIN, Role.SUPER_ADMIN), parcelController.assignDeliveryMan)

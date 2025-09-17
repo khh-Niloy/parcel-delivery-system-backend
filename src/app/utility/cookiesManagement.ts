@@ -4,13 +4,13 @@ const setCookies = (res:Response, accessToken: string, refreshToken: string)=>{
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
       secure: true,
-      maxAge: 15 * 60 * 1000,
+    //   maxAge: 15 * 60 * 1000,
       sameSite: "none"
     })
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: true,   
-        maxAge: 15 * 60 * 1000,
+        // maxAge: 15 * 60 * 1000,
         sameSite: "none"
     })
 }

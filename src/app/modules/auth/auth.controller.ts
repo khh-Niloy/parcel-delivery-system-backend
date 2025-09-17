@@ -7,14 +7,14 @@ import AppError from "../../errorHelper/AppError"
 const userLogin = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const userLogin = await authServices.userLoginService(req.body)
-        const {accessRefreshToken, user} = userLogin
+        const {accessRefreshToken} = userLogin
 
         cookiesManagement.setCookies(res, accessRefreshToken.accessToken, accessRefreshToken.refreshToken)
 
         successResponse(res, {
             status: 200,
             message: "user logged in",
-            data: {accessRefreshToken, user},
+            // data: {accessRefreshToken, user},
         })
     } catch (error) {
         next(error)
@@ -36,7 +36,7 @@ const userLogOut = async(req: Request, res: Response, next: NextFunction)=>{
 const getNewAccessToken = async(req: Request, res: Response, next: NextFunction)=>{
     try {
         const refreshToken = req.cookies.refreshToken
-        console.log(refreshToken)
+        // console.log(refreshToken)
 
         if(!refreshToken){
             throw new AppError(400, "refresh token not found from cookies");

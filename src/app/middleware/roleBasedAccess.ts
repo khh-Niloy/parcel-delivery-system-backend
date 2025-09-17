@@ -6,10 +6,30 @@ import AppError from "../errorHelper/AppError"
 
 export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Response, next: NextFunction)=>{
     try {
-        // const accessToken = req.headers.authorization || req.cookies.accessToken
-        const accessToken = req.cookies.accessToken
+        // Support both Authorization header and cookies for authentication
+        let accessToken = req.cookies.accessToken
+        
+        // Check Authorization header if no cookie token
+        if (!accessToken && req.headers.authorization) {
+            const authHeader = req.headers.authorization
+            if (authHeader.startsWith('Bearer ')) {
+                accessToken = authHeader.substring(7) // Remove 'Bearer ' prefix
+            }
+        }
+
+        if (!accessToken) {
+            throw new AppError(401, "Access token not found");
+        }
 
         const userInfo = jwtToken.verifyToken(accessToken as string)
+
+        // For system tokens, skip user lookup and role validation
+        if (userInfo.email === "system@internal.com" && userInfo.role === "SUPER_ADMIN") {
+            req.user = userInfo
+            // console.log("userInfo", req.user)
+            next()
+            return
+        }
 
         const user = await User.findOne({email: userInfo.email})
 
@@ -40,10 +60,10 @@ export const roleBasedAccess = (...role: string[])=> async(req: Request, res:Res
         }
 
         req.user = userInfo
-        console.log("userInfo",req.user)
+        // console.log("userInfo",req.user)
         next()
     } catch (error) {
-        console.log("jwt error", error);
+        // JWT verification error occurred
         next(error)
     }
 }

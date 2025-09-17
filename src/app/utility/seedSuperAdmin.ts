@@ -28,7 +28,7 @@ export const seedSuperAdmin = async()=>{
         auths: [authProvider]
     })
 
-    console.log("✅ super admin created")
+    // console.log("✅ super admin created")
     } catch (error) {
         console.log(error)
     }

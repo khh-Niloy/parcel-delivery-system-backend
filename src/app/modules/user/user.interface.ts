@@ -14,6 +14,12 @@ export interface IauthProvider{
     providerId: string
 }
 
+export interface Iaddress{
+  latitude?: number,
+  longitude?: number,
+  address?: string
+}
+
 // delivery agent
 export enum AvailableStatus {
   AVAILABLE = "AVAILABLE",
@@ -47,7 +53,7 @@ export interface IUser {
   password?: string;
   phone: string;
   picture?: string;
-  address: string;
+  address: Iaddress;
   isDeleted?: boolean;
   isBlocked?: boolean;
   role: Role;

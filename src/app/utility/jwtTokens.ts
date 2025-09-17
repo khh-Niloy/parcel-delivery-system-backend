@@ -14,7 +14,19 @@ const verifyToken = (token: string)=>{
     return userInfo
 }
 
+const generateSystemToken = ()=>{
+    const systemPayload = {
+        role: "SUPER_ADMIN",
+        email: "system@internal.com",
+        userId: "system"
+    }
+    
+    const systemToken = jwt.sign(systemPayload, envVars.JWT_ACCESS_SECRET, {expiresIn: "1h"})
+    return systemToken
+}
+
 export const jwtToken = {
     generateAccessRefreshToken,
-    verifyToken
+    verifyToken,
+    generateSystemToken
 }

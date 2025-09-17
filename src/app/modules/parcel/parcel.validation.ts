@@ -17,11 +17,18 @@ export const createParcelZodSchema = z.object({
       required_error: "Receiver PhoneNumber is required",
     }),
 
-  deliveryAddress: z.string({
-    required_error: "Delivery address is required",
+  deliveryAddress: z.object({
+   
+    latitude: z.number({
+      required_error: "Delivery address latitude is required",
+    }),
+    longitude: z.number({
+      required_error: "Delivery address longitude is required",
+    }),
   }),
 
   pickupAddress: z.object({
+    
     latitude: z.number({
       required_error: "Pickup address latitude is required",
     }),
@@ -51,18 +58,25 @@ export const updateParcelZodSchema = z.object({
     })
     .positive("Weight must be a positive number"),
 
-  deliveryAddress: z.string({
-    required_error: "Delivery address is required",
-  }),
-
-  pickupAddress: z.object({
-    latitude: z.number({
-      required_error: "Pickup address latitude is required",
+    deliveryAddress: z.object({
+      
+      latitude: z.number({
+        required_error: "Delivery address latitude is required",
+      }),
+      longitude: z.number({
+        required_error: "Delivery address longitude is required",
+      }),
     }),
-    longitude: z.number({
-      required_error: "Pickup address longitude is required",
+  
+    pickupAddress: z.object({
+      
+      latitude: z.number({
+        required_error: "Pickup address latitude is required",
+      }),
+      longitude: z.number({
+        required_error: "Pickup address longitude is required",
+      }),
     }),
-  }),
 
   deliveryDate: z
     .string({

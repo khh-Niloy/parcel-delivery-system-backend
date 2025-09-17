@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { AvailableStatus, ExperienceLevel, IauthProvider, Ilocation, IUser, Role, VehicleType } from "./user.interface";
+import { AvailableStatus, ExperienceLevel, Iaddress, IauthProvider, Ilocation, IUser, Role, VehicleType } from "./user.interface";
 
 const authProviderSchema = new Schema<IauthProvider>({
     provider: {type: String, required: true},
@@ -11,13 +11,19 @@ const locationSchema = new Schema<Ilocation>({
     longitude: { type: Number },
 }, {versionKey: false, _id: false})
 
+const addressSchema = new Schema<Iaddress>({
+    latitude: {type: Number},
+    longitude: {type: Number},
+    address: {type: String},
+}, {timestamps: false, versionKey: false, _id: false})
+
 export const userSchema = new Schema<IUser>({
     name: {type: String, required: true},
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String },
     phone: { type: String, required: true },
     picture: { type: String },
-    address: { type: String, required: true },
+    address: { type: addressSchema, required: true },
     isDeleted: {type: Boolean, default: false},
     isBlocked: {type: Boolean, default: false},
     role: { type: String, enum: Object.values(Role), default: Role.SENDER },
