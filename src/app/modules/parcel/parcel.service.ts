@@ -181,21 +181,21 @@ const updateParcelStatusService = async(payload: { status: Status }, trackingId:
     }
 
     // Check payment before allowing approval
-    if(payload.status === Status.APPROVED && !parcel.isPaid){
-        // Verify payment status in payment record
-        if(parcel.paymentId){
-            const payment = await Payment.findById(parcel.paymentId)
-            if(!payment || payment.status !== PAYMENT_STATUS.PAID){
-                throw new AppError(400, 
-                    "Payment must be completed before approving the parcel"
-                );
-            }
-        } else {
-            throw new AppError(400, 
-                "Payment must be completed before approving the parcel"
-            );
-        }
-    }
+    // if(payload.status === Status.APPROVED && !parcel.isPaid){
+    //     // Verify payment status in payment record
+    //     if(parcel.paymentId){
+    //         const payment = await Payment.findById(parcel.paymentId)
+    //         if(!payment || payment.status !== PAYMENT_STATUS.PAID){
+    //             throw new AppError(400, 
+    //                 "Payment must be completed before approving the parcel"
+    //             );
+    //         }
+    //     } else {
+    //         throw new AppError(400, 
+    //             "Payment must be completed before approving the parcel"
+    //         );
+    //     }
+    // }
 
     let updateStatusLog = {}
 
