@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express"
-import { routes } from "./app/route"
+import { routes } from "./app/routes"
 import cookieParser from 'cookie-parser'
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler"
 import notFound from "./app/middleware/notFound"

@@ -50,6 +50,17 @@ const successPaymentService = async(query : Record<string, string>)=>{
 
         const {selectedDeliveryAgent} = await getETA(updateParcel?.pickupAddress.latitude as number, updateParcel?.pickupAddress.longitude as number, allAvailableDeliveryAgent as unknown as IAllDeliveryAgent[])
 
+        if(!selectedDeliveryAgent){
+            throw new Error("Could not select a delivery agent")
+        }
+
+        // Format the delivery agent data to match the schema (convert _id to string)
+        const assignedAgentData = {
+            _id: selectedDeliveryAgent._id.toString(),
+            name: selectedDeliveryAgent.name,
+            phone: selectedDeliveryAgent.phone
+        }
+
         const updateStatusLog : ITrackingEvents = {
             status: Status.ASSIGNED,
             // location: {
@@ -62,7 +73,7 @@ const successPaymentService = async(query : Record<string, string>)=>{
         }
 
         const insertDeliveryAgentInParcel = await Parcel.findOneAndUpdate({trackingId: updateParcel?.trackingId}, {
-        assignedDeliveryAgent: selectedDeliveryAgent, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
+        assignedDeliveryAgent: assignedAgentData, status:Status.ASSIGNED, $push: {trackingEvents: updateStatusLog}
         }, {new: true, session})
 
         // console.log("insertDeliveryAgentInParcel", insertDeliveryAgentInParcel)

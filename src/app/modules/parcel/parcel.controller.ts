@@ -34,8 +34,8 @@ const updateParcelStatus = async(req: Request, res: Response, next: NextFunction
     try {
         const trackingId = req.params.trackingId
         const userInfo = req.user
-        const lat = parseFloat(req.query.lat as string)
-        const lng = parseFloat(req.query.lng as string)
+        const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined
+        const lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined
         const updateParcelStatus = await parcelServices.updateParcelStatusService(req.body, trackingId, userInfo, lat, lng)
         successResponse(res, {
             status: 201,

@@ -26,19 +26,19 @@ export const userSchema = new Schema<IUser>({
     address: { type: addressSchema, required: true },
     isDeleted: {type: Boolean, default: false},
     isBlocked: {type: Boolean, default: false},
-    role: { type: String, enum: Object.values(Role), default: Role.SENDER },
+    role: { type: String, enum: Object.values(Role) },
     auths: [authProviderSchema],
 
     // delivery agent
 
     currentParcelId: { type: Schema.Types.ObjectId, ref: "Parcel" },
-    availableStatus: { type: String, enum: Object.values(AvailableStatus)},
-    completedDeliveries: { type: Number},
     assignedParcels: [{ type: Schema.Types.ObjectId, ref: "Parcel" }],
     vehicleType: {type: String, enum: Object.values(VehicleType),},
     licenseNumber: { type: String },
     experienceLevel: { type: String, enum: Object.values(ExperienceLevel) },
     currentLocation: { type: locationSchema },
+    availableStatus: { type: String, enum: Object.values(AvailableStatus)},
+    completedDeliveries: { type: Number, default: 0},
 
     // delivery agent
 

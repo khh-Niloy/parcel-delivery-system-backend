@@ -18,7 +18,9 @@ export const createParcelZodSchema = z.object({
     }),
 
   deliveryAddress: z.object({
-   
+    address: z.string({
+      required_error: "Delivery address is required",
+    }),
     latitude: z.number({
       required_error: "Delivery address latitude is required",
     }),
@@ -28,7 +30,9 @@ export const createParcelZodSchema = z.object({
   }),
 
   pickupAddress: z.object({
-    
+    address: z.string({
+      required_error: "Pickup address is required",
+    }),
     latitude: z.number({
       required_error: "Pickup address latitude is required",
     }),

@@ -14,7 +14,7 @@ const userRegisterService = async(payload: Partial<IUser>)=>{
 
     payload.password = await hashedPasswordFunc.generateHashedPassword(payload.password as string)
     payload.address = {
-        address: payload.address?.address as string
+        address: payload.address as string
     }
 
     const auths : IauthProvider = {provider: "credential", providerId: payload.email as string}
@@ -25,7 +25,7 @@ const userRegisterService = async(payload: Partial<IUser>)=>{
             completedDeliveries : 0
         })
     }
-    
+    console.log("userCreatePayload", userCreatePayload)
     const newUser = await User.create(userCreatePayload)
     return newUser
 }

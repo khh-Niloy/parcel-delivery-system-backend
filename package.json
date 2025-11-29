@@ -22,6 +22,7 @@
   "homepage": "https://github.com/khh-Niloy/parcel-delivery-system-backend#readme",
   "description": "",
   "dependencies": {
+    "@faker-js/faker": "^10.0.0",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",

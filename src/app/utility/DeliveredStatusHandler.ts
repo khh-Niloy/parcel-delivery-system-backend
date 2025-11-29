@@ -83,6 +83,13 @@ export const DeliveredStatusHandler = async(parcel: IParcel, payload: {status: S
 
                 if (!selectedPendingParcel || !selectedDeliveryAgent) break;
 
+                // Format the delivery agent data to match the schema (convert _id to string)
+                const assignedAgentData = {
+                    _id: selectedDeliveryAgent._id.toString(),
+                    name: selectedDeliveryAgent.name,
+                    phone: selectedDeliveryAgent.phone
+                }
+
                 const updateStatusLog = {
                     status: Status.ASSIGNED,
                     location: selectedPendingParcel.pickupAddress,
@@ -94,7 +101,7 @@ export const DeliveredStatusHandler = async(parcel: IParcel, payload: {status: S
                 await Parcel.findByIdAndUpdate(
                     selectedPendingParcel._id,
                     {
-                        assignedDeliveryAgent: selectedDeliveryAgent,
+                        assignedDeliveryAgent: assignedAgentData,
                         status: Status.ASSIGNED,
                         $push: { trackingEvents: updateStatusLog },
                     },
